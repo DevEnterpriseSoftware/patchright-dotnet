@@ -4,6 +4,7 @@
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using System.Text.RegularExpressions;
 using System.Xml.Linq;
 
 Console.WriteLine($"Patching Playwright .NET to create Patchright");
@@ -106,11 +107,26 @@ void PatchVersionPropsFile()
 
 void ReplaceReadmeFile()
 {
-  var readmeFilePath = Path.Combine(playwrightPath, "README.md");
+  var playwrightReadmeFilePath = Path.Combine(playwrightPath, "README.md");
 
-  Console.WriteLine($"Replacing README file: {readmeFilePath}");
+  Console.WriteLine($"Replacing README file: {playwrightReadmeFilePath}");
 
-  File.Copy("README.md", readmeFilePath, overwrite: true);
+  File.Copy("README.md", playwrightReadmeFilePath, overwrite: true);
+  
+  var readmeContent = File.ReadAllText(playwrightReadmeFilePath);
+  
+  // Extract H1 content and convert to markdown.
+  var h1Match = Regex.Match(readmeContent, @"<h1[^>]*>(.*?)</h1>", RegexOptions.Singleline);
+  if (h1Match.Success)
+  {
+    var h1Content = h1Match.Groups[1].Value.Trim();
+    readmeContent = Regex.Replace(readmeContent, @"<h1[^>]*>.*?</h1>", $"# {h1Content}", RegexOptions.Singleline);
+  }
+  
+  // Remove P tags and their contents (badges, etc.)
+  readmeContent = Regex.Replace(readmeContent, @"<p[^>]*>.*?</p>", "", RegexOptions.Singleline);
+  
+  File.WriteAllText(playwrightReadmeFilePath, readmeContent);
 }
 
 // Disable package validation in all project files so that builds work with the new PackageId value.

@@ -22,7 +22,7 @@
 #### Patchright is a patched and undetected version of the Playwright Testing and Automation Framework for .NET. </br> It can be used as a drop-in replacement for Playwright.
 
 > [!NOTE]  
-> This repository serves the Patchright .NET Package. To use Patchright with Python or NodeJS, check out the [Python Package](https://github.com/DevEnterpriseSoftware/patchright-dotnet) or the [NodeJS Package](https://github.com/Kaliiiiiiiiii-Vinyzu/patchright-nodejs).
+> This repository serves the Patchright .NET Package. To use Patchright with Python or NodeJS, check out the [Python Package](https://github.com/Kaliiiiiiiiii-Vinyzu/patchright-python) or the [NodeJS Package](https://github.com/Kaliiiiiiiiii-Vinyzu/patchright-nodejs).
 > Also check out the main [Patchright Driver Repository](https://github.com/Kaliiiiiiiiii-Vinyzu/patchright)
 
 ---
