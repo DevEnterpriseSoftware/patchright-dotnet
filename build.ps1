@@ -153,6 +153,21 @@ finally {
     Pop-Location
 }
 
+# Create patch file
+Write-Host "`nCreating patch file..." -ForegroundColor Cyan
+Push-Location $playwrightDir
+try {
+    git diff -- . ":(exclude)README.md" > ../Patchright.patch
+    if ($LASTEXITCODE -ne 0) {
+        Write-Error "Failed to create patch file"
+        exit 1
+    }
+    Write-Host "✓ Patch file created successfully" -ForegroundColor Green
+}
+finally {
+    Pop-Location
+}
+
 # Pack project
 Write-Host "`nPacking Playwright project..." -ForegroundColor Cyan
 Push-Location $playwrightDir

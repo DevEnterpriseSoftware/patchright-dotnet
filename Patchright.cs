@@ -4,10 +4,14 @@
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using System.Text;
 using System.Text.RegularExpressions;
+using System.Xml;
 using System.Xml.Linq;
 
-Console.WriteLine($"Patching Playwright .NET to create Patchright");
+Console.WriteLine();
+Console.WriteLine($"--- Patching Playwright .NET to create Patchright ---");
+Console.WriteLine();
 
 var playwrightPath = args.Length > 0 ? args[0] : "playwright-dotnet";
 if (!Directory.Exists(playwrightPath))
@@ -68,7 +72,16 @@ void PatchProjectFile()
   doc.Descendants("Authors").FirstOrDefault()?.Value = "Microsoft Corporation, patched by Werner van Deventer";
   doc.Descendants("RepositoryUrl").FirstOrDefault()?.Value = "https://github.com/DevEnterpriseSoftware/patchright-dotnet.git";
 
-  doc.Save(playwrightProjectPath);
+    // Use specific writer settings to avoid BOM and control new lines for better diffs.
+  using var writer = XmlWriter.Create(playwrightProjectPath, new XmlWriterSettings
+  {
+    Encoding = new UTF8Encoding(false),
+    Indent = true,
+    NewLineChars = "\n",
+    NewLineHandling = NewLineHandling.Replace
+  });
+
+  doc.Save(writer);
 }
 
 // Update the targets file to replace Nuget package ID Microsoft.Playwright with Patchright.
@@ -102,7 +115,16 @@ void PatchVersionPropsFile()
   doc.Descendants("RepositoryUrl").FirstOrDefault()?.Value = "https://github.com/DevEnterpriseSoftware/patchright-dotnet.git";
   doc.Descendants("PackageLicenseExpression").FirstOrDefault()?.Value = "Apache-2.0";
 
-  doc.Save(playwrightVersionPropsPath);
+  // Use specific writer settings to avoid BOM and control new lines for better diffs.
+  using var writer = XmlWriter.Create(playwrightVersionPropsPath, new XmlWriterSettings
+  {
+    Encoding = new UTF8Encoding(false),
+    Indent = true,
+    NewLineChars = "\n",
+    NewLineHandling = NewLineHandling.Replace
+  });
+
+  doc.Save(writer);
 }
 
 void ReplaceReadmeFile()
@@ -140,7 +162,17 @@ void DisablePackageValidation()
     {
       Console.WriteLine($"Disabling EnablePackageValidation in project file: {projectFile}");
       element.Value = "false";
-      doc.Save(projectFile);
+      
+      // Use specific writer settings to avoid BOM and control new lines for better diffs.
+      using var writer = XmlWriter.Create(projectFile, new XmlWriterSettings
+      {
+        Encoding = new UTF8Encoding(false),
+        Indent = true,
+        NewLineChars = "\n",
+        NewLineHandling = NewLineHandling.Replace
+      });
+
+      doc.Save(writer);
     }
   }
 }

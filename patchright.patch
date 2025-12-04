@@ -1,0 +1,1009 @@
+diff --git a/src/Common/Version.props b/src/Common/Version.props
+index 15a0925e..a57156cb 100644
+--- a/src/Common/Version.props
++++ b/src/Common/Version.props
+@@ -1,3 +1,4 @@
++<?xml version="1.0" encoding="utf-8"?>
+ <Project>
+   <PropertyGroup>
+     <AssemblyVersion>1.56.0</AssemblyVersion>
+@@ -6,14 +7,14 @@
+     <ReleaseVersion>$(AssemblyVersion)</ReleaseVersion>
+     <FileVersion>$(AssemblyVersion)</FileVersion>
+     <NoDefaultExcludes>true</NoDefaultExcludes>
+-    <Authors>Microsoft</Authors>
+-    <Owners>Microsoft</Owners>
+-    <PackageProjectUrl>https://github.com/microsoft/playwright-dotnet</PackageProjectUrl>
+-    <PackageTags>headless,chrome,firefox,webkit,playwright</PackageTags>
+-    <RepositoryUrl>https://github.com/microsoft/playwright-dotnet.git</RepositoryUrl>
++    <Authors>Microsoft Corporation, patched by Werner van Deventer</Authors>
++    <Owners>DevEnterprise Software</Owners>
++    <PackageProjectUrl>https://github.com/DevEnterpriseSoftware/patchright-dotnet</PackageProjectUrl>
++    <PackageTags>patchright,undetected,headless,chrome,playwright</PackageTags>
++    <RepositoryUrl>https://github.com/DevEnterpriseSoftware/patchright-dotnet.git</RepositoryUrl>
+     <PackageReleaseNotes><![CDATA[
+ ]]></PackageReleaseNotes>
+     <Copyright>© Microsoft Corporation. All rights reserved.</Copyright>
+-    <PackageLicenseExpression>MIT</PackageLicenseExpression>
++    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+   </PropertyGroup>
+-</Project>
++</Project>
+\ No newline at end of file
+diff --git a/src/Playwright.MSTest/Playwright.MSTest.csproj b/src/Playwright.MSTest/Playwright.MSTest.csproj
+index b00180af..1d006068 100644
+--- a/src/Playwright.MSTest/Playwright.MSTest.csproj
++++ b/src/Playwright.MSTest/Playwright.MSTest.csproj
+@@ -20,10 +20,9 @@
+     <IsPackable>true</IsPackable>
+     <Nullable>enable</Nullable>
+     <PackageReadmeFile>README.md</PackageReadmeFile>
+-    <EnablePackageValidation>true</EnablePackageValidation>
++    <EnablePackageValidation>false</EnablePackageValidation>
+     <PackageValidationBaselineVersion>1.52.0</PackageValidationBaselineVersion>
+   </PropertyGroup>
+-
+   <Import Project="../Common/Version.props" />
+   <Import Project="../Common/SignAssembly.props" />
+   <Import Project="../Common/SignFiles.props" />
+@@ -46,4 +45,4 @@
+     <None Include="..\Common\icon.png" Pack="true" Visible="false" PackagePath="icon.png" />
+     <None Include="..\..\README.md" Pack="true" PackagePath="README.md" />
+   </ItemGroup>
+-</Project>
++</Project>
+\ No newline at end of file
+diff --git a/src/Playwright.NUnit/Playwright.NUnit.csproj b/src/Playwright.NUnit/Playwright.NUnit.csproj
+index 992a6764..80f8acdb 100644
+--- a/src/Playwright.NUnit/Playwright.NUnit.csproj
++++ b/src/Playwright.NUnit/Playwright.NUnit.csproj
+@@ -20,10 +20,9 @@
+     <IsPackable>true</IsPackable>
+     <Nullable>enable</Nullable>
+     <PackageReadmeFile>README.md</PackageReadmeFile>
+-    <EnablePackageValidation>true</EnablePackageValidation>
++    <EnablePackageValidation>false</EnablePackageValidation>
+     <PackageValidationBaselineVersion>1.52.0</PackageValidationBaselineVersion>
+   </PropertyGroup>
+-
+   <Import Project="../Common/Version.props" />
+   <Import Project="../Common/SignAssembly.props" />
+   <Import Project="../Common/SignFiles.props" />
+@@ -46,4 +45,4 @@
+     <None Include="..\Common\icon.png" Pack="true" Visible="false" PackagePath="icon.png" />
+     <None Include="..\..\README.md" Pack="true" PackagePath="README.md" />
+   </ItemGroup>
+-</Project>
++</Project>
+\ No newline at end of file
+diff --git a/src/Playwright.TestAdapter/Playwright.TestAdapter.csproj b/src/Playwright.TestAdapter/Playwright.TestAdapter.csproj
+index 873863f8..07b608d8 100644
+--- a/src/Playwright.TestAdapter/Playwright.TestAdapter.csproj
++++ b/src/Playwright.TestAdapter/Playwright.TestAdapter.csproj
+@@ -1,5 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
+ <Project Sdk="Microsoft.NET.Sdk">
+-
+   <PropertyGroup>
+     <Title>Microsoft.Playwright.TestAdapter</Title>
+     <PackageId>Microsoft.Playwright.TestAdapter</PackageId>
+@@ -19,14 +19,12 @@
+     <IsPackable>true</IsPackable>
+     <Nullable>enable</Nullable>
+     <PackageReadmeFile>README.md</PackageReadmeFile>
+-    <EnablePackageValidation>true</EnablePackageValidation>
++    <EnablePackageValidation>false</EnablePackageValidation>
+     <PackageValidationBaselineVersion>1.52.0</PackageValidationBaselineVersion>
+   </PropertyGroup>
+-
+   <Import Project="../Common/Version.props" />
+   <Import Project="../Common/SignAssembly.props" />
+   <Import Project="../Common/SignFiles.props" />
+-
+   <ItemGroup>
+     <PackageReference Include="Microsoft.TestPlatform.ObjectModel" Version="17.3.0" />
+     <ProjectReference Include="..\Playwright\Playwright.csproj" />
+@@ -43,4 +41,4 @@
+     <None Include="..\Common\icon.png" Pack="true" Visible="false" PackagePath="icon.png" />
+     <None Include="..\..\README.md" Pack="true" PackagePath="README.md" />
+   </ItemGroup>
+-</Project>
++</Project>
+\ No newline at end of file
+diff --git a/src/Playwright.Xunit/Playwright.Xunit.csproj b/src/Playwright.Xunit/Playwright.Xunit.csproj
+index 4dcf4f23..d8e97a17 100644
+--- a/src/Playwright.Xunit/Playwright.Xunit.csproj
++++ b/src/Playwright.Xunit/Playwright.Xunit.csproj
+@@ -20,10 +20,9 @@
+     <IsPackable>true</IsPackable>
+     <Nullable>enable</Nullable>
+     <PackageReadmeFile>README.md</PackageReadmeFile>
+-    <EnablePackageValidation>true</EnablePackageValidation>
++    <EnablePackageValidation>false</EnablePackageValidation>
+     <PackageValidationBaselineVersion>1.52.0</PackageValidationBaselineVersion>
+   </PropertyGroup>
+-
+   <Import Project="../Common/Version.props" />
+   <Import Project="../Common/SignAssembly.props" />
+   <Import Project="../Common/SignFiles.props" />
+@@ -44,4 +43,4 @@
+     <None Include="..\Common\icon.png" Pack="true" Visible="false" PackagePath="icon.png" />
+     <None Include="..\..\README.md" Pack="true" PackagePath="README.md" />
+   </ItemGroup>
+-</Project>
++</Project>
+\ No newline at end of file
+diff --git a/src/Playwright/API/Generated/IFrame.cs b/src/Playwright/API/Generated/IFrame.cs
+index cefb08b2..60c3e5b4 100644
+--- a/src/Playwright/API/Generated/IFrame.cs
++++ b/src/Playwright/API/Generated/IFrame.cs
+@@ -334,7 +334,7 @@ public partial interface IFrame
+     /// </param>
+     /// <param name="arg">Optional argument to pass to <see cref="IFrame.EvalOnSelectorAsync"/>.</param>
+     /// <param name="options">Call options</param>
+-    Task<T> EvalOnSelectorAsync<T>(string selector, string expression, object? arg = default, FrameEvalOnSelectorOptions? options = default);
++    Task<T> EvalOnSelectorAsync<T>(string selector, string expression, object? arg = default, FrameEvalOnSelectorOptions? options = default, bool isolatedContext = true);
+ 
+     /// <summary>
+     /// <para>
+@@ -360,7 +360,7 @@ public partial interface IFrame
+     /// evaluates to a function, the function is automatically invoked.
+     /// </param>
+     /// <param name="arg">Optional argument to pass to <see cref="IFrame.EvalOnSelectorAllAsync"/>.</param>
+-    Task<T> EvalOnSelectorAllAsync<T>(string selector, string expression, object? arg = default);
++    Task<T> EvalOnSelectorAllAsync<T>(string selector, string expression, object? arg = default, bool isolatedContext = true);
+ 
+     /// <summary>
+     /// <para>Returns the return value of <see cref="IFrame.EvaluateAsync"/>.</para>
+@@ -397,7 +397,7 @@ public partial interface IFrame
+     /// evaluates to a function, the function is automatically invoked.
+     /// </param>
+     /// <param name="arg">Optional argument to pass to <see cref="IFrame.EvaluateAsync"/>.</param>
+-    Task<T> EvaluateAsync<T>(string expression, object? arg = default);
++    Task<T> EvaluateAsync<T>(string expression, object? arg = default, bool isolatedContext = true);
+ 
+     /// <summary>
+     /// <para>Returns the return value of <see cref="IFrame.EvaluateHandleAsync"/> as a <see cref="IJSHandle"/>.</para>
+@@ -430,7 +430,7 @@ public partial interface IFrame
+     /// evaluates to a function, the function is automatically invoked.
+     /// </param>
+     /// <param name="arg">Optional argument to pass to <see cref="IFrame.EvaluateHandleAsync"/>.</param>
+-    Task<IJSHandle> EvaluateHandleAsync(string expression, object? arg = default);
++    Task<IJSHandle> EvaluateHandleAsync(string expression, object? arg = default, bool isolatedContext = true);
+ 
+     /// <summary>
+     /// <para>Use locator-based <see cref="ILocator.FillAsync"/> instead. Read more about <a href="https://playwright.dev/dotnet/docs/locators">locators</a>.</para>
+diff --git a/src/Playwright/API/Generated/IJSHandle.cs b/src/Playwright/API/Generated/IJSHandle.cs
+index 135a97cd..b6c403b7 100644
+--- a/src/Playwright/API/Generated/IJSHandle.cs
++++ b/src/Playwright/API/Generated/IJSHandle.cs
+@@ -71,7 +71,7 @@ public partial interface IJSHandle
+     /// evaluates to a function, the function is automatically invoked.
+     /// </param>
+     /// <param name="arg">Optional argument to pass to <see cref="IJSHandle.EvaluateAsync"/>.</param>
+-    Task<T> EvaluateAsync<T>(string expression, object? arg = default);
++    Task<T> EvaluateAsync<T>(string expression, object? arg = default, bool isolatedContext = true);
+ 
+     /// <summary>
+     /// <para>
+@@ -95,7 +95,7 @@ public partial interface IJSHandle
+     /// evaluates to a function, the function is automatically invoked.
+     /// </param>
+     /// <param name="arg">Optional argument to pass to <see cref="IJSHandle.EvaluateHandleAsync"/>.</param>
+-    Task<IJSHandle> EvaluateHandleAsync(string expression, object? arg = default);
++    Task<IJSHandle> EvaluateHandleAsync(string expression, object? arg = default, bool isolatedContext = true);
+ 
+     /// <summary>
+     /// <para>
+diff --git a/src/Playwright/API/Generated/ILocator.cs b/src/Playwright/API/Generated/ILocator.cs
+index 32a41587..69b7da6a 100644
+--- a/src/Playwright/API/Generated/ILocator.cs
++++ b/src/Playwright/API/Generated/ILocator.cs
+@@ -500,7 +500,7 @@ public partial interface ILocator
+     /// </param>
+     /// <param name="arg">Optional argument to pass to <see cref="ILocator.EvaluateAsync"/>.</param>
+     /// <param name="options">Call options</param>
+-    Task<T> EvaluateAsync<T>(string expression, object? arg = default, LocatorEvaluateOptions? options = default);
++    Task<T> EvaluateAsync<T>(string expression, object? arg = default, LocatorEvaluateOptions? options = default, bool isolatedContext = true);
+ 
+     /// <summary>
+     /// <para>Execute JavaScript code in the page, taking all matching elements as an argument.</para>
+@@ -526,7 +526,7 @@ public partial interface ILocator
+     /// evaluates to a function, the function is automatically invoked.
+     /// </param>
+     /// <param name="arg">Optional argument to pass to <see cref="ILocator.EvaluateAllAsync"/>.</param>
+-    Task<T> EvaluateAllAsync<T>(string expression, object? arg = default);
++    Task<T> EvaluateAllAsync<T>(string expression, object? arg = default, bool isolatedContext = true);
+ 
+     /// <summary>
+     /// <para>
+@@ -556,7 +556,7 @@ public partial interface ILocator
+     /// </param>
+     /// <param name="arg">Optional argument to pass to <see cref="ILocator.EvaluateHandleAsync"/>.</param>
+     /// <param name="options">Call options</param>
+-    Task<IJSHandle> EvaluateHandleAsync(string expression, object? arg = default, LocatorEvaluateHandleOptions? options = default);
++    Task<IJSHandle> EvaluateHandleAsync(string expression, object? arg = default, LocatorEvaluateHandleOptions? options = default, bool isolatedContext = true);
+ 
+     /// <summary>
+     /// <para>Set a value to the input field.</para>
+diff --git a/src/Playwright/API/Generated/IPage.cs b/src/Playwright/API/Generated/IPage.cs
+index 3ac17731..04b81682 100644
+--- a/src/Playwright/API/Generated/IPage.cs
++++ b/src/Playwright/API/Generated/IPage.cs
+@@ -671,7 +671,7 @@ public partial interface IPage
+     /// </param>
+     /// <param name="arg">Optional argument to pass to <see cref="IPage.EvalOnSelectorAsync"/>.</param>
+     /// <param name="options">Call options</param>
+-    Task<T> EvalOnSelectorAsync<T>(string selector, string expression, object? arg = default, PageEvalOnSelectorOptions? options = default);
++    Task<T> EvalOnSelectorAsync<T>(string selector, string expression, object? arg = default, PageEvalOnSelectorOptions? options = default, bool isolatedContext = true);
+ 
+     /// <summary>
+     /// <para>
+@@ -697,7 +697,7 @@ public partial interface IPage
+     /// evaluates to a function, the function is automatically invoked.
+     /// </param>
+     /// <param name="arg">Optional argument to pass to <see cref="IPage.EvalOnSelectorAllAsync"/>.</param>
+-    Task<T> EvalOnSelectorAllAsync<T>(string selector, string expression, object? arg = default);
++    Task<T> EvalOnSelectorAllAsync<T>(string selector, string expression, object? arg = default, bool isolatedContext = true);
+ 
+     /// <summary>
+     /// <para>Returns the value of the <see cref="IPage.EvaluateAsync"/> invocation.</para>
+@@ -735,7 +735,7 @@ public partial interface IPage
+     /// evaluates to a function, the function is automatically invoked.
+     /// </param>
+     /// <param name="arg">Optional argument to pass to <see cref="IPage.EvaluateAsync"/>.</param>
+-    Task<T> EvaluateAsync<T>(string expression, object? arg = default);
++    Task<T> EvaluateAsync<T>(string expression, object? arg = default, bool isolatedContext = true);
+ 
+     /// <summary>
+     /// <para>
+@@ -771,7 +771,7 @@ public partial interface IPage
+     /// evaluates to a function, the function is automatically invoked.
+     /// </param>
+     /// <param name="arg">Optional argument to pass to <see cref="IPage.EvaluateHandleAsync"/>.</param>
+-    Task<IJSHandle> EvaluateHandleAsync(string expression, object? arg = default);
++    Task<IJSHandle> EvaluateHandleAsync(string expression, object? arg = default, bool isolatedContext = true);
+ 
+     /// <summary>
+     /// <para>
+diff --git a/src/Playwright/API/Generated/IWorker.cs b/src/Playwright/API/Generated/IWorker.cs
+index 87ddd913..19d567be 100644
+--- a/src/Playwright/API/Generated/IWorker.cs
++++ b/src/Playwright/API/Generated/IWorker.cs
+@@ -76,7 +76,7 @@ public partial interface IWorker
+     /// evaluates to a function, the function is automatically invoked.
+     /// </param>
+     /// <param name="arg">Optional argument to pass to <see cref="IWorker.EvaluateAsync"/>.</param>
+-    Task<T> EvaluateAsync<T>(string expression, object? arg = default);
++    Task<T> EvaluateAsync<T>(string expression, object? arg = default, bool isolatedContext = true);
+ 
+     /// <summary>
+     /// <para>
+@@ -98,7 +98,7 @@ public partial interface IWorker
+     /// evaluates to a function, the function is automatically invoked.
+     /// </param>
+     /// <param name="arg">Optional argument to pass to <see cref="IWorker.EvaluateHandleAsync"/>.</param>
+-    Task<IJSHandle> EvaluateHandleAsync(string expression, object? arg = default);
++    Task<IJSHandle> EvaluateHandleAsync(string expression, object? arg = default, bool isolatedContext = true);
+ 
+     string Url { get; }
+ }
+diff --git a/src/Playwright/API/Generated/Options/BrowserNewContextOptions.cs b/src/Playwright/API/Generated/Options/BrowserNewContextOptions.cs
+index da6d9e9f..11d67288 100644
+--- a/src/Playwright/API/Generated/Options/BrowserNewContextOptions.cs
++++ b/src/Playwright/API/Generated/Options/BrowserNewContextOptions.cs
+@@ -76,6 +76,7 @@ public class BrowserNewContextOptions
+         TimezoneId = clone.TimezoneId;
+         UserAgent = clone.UserAgent;
+         ViewportSize = clone.ViewportSize;
++        FocusControl = clone.FocusControl;
+     }
+ 
+     /// <summary>
+@@ -451,4 +452,7 @@ public class BrowserNewContextOptions
+     /// </remarks>
+     [JsonPropertyName("viewport")]
+     public ViewportSize? ViewportSize { get; set; }
++
++    [JsonPropertyName("focusControl")]
++    public bool? FocusControl { get; set; }
+ }
+diff --git a/src/Playwright/API/Generated/Options/BrowserNewPageOptions.cs b/src/Playwright/API/Generated/Options/BrowserNewPageOptions.cs
+index 71f9550b..cb73dab4 100644
+--- a/src/Playwright/API/Generated/Options/BrowserNewPageOptions.cs
++++ b/src/Playwright/API/Generated/Options/BrowserNewPageOptions.cs
+@@ -76,6 +76,7 @@ public class BrowserNewPageOptions
+         TimezoneId = clone.TimezoneId;
+         UserAgent = clone.UserAgent;
+         ViewportSize = clone.ViewportSize;
++        FocusControl = clone.FocusControl;
+     }
+ 
+     /// <summary>
+@@ -451,4 +452,7 @@ public class BrowserNewPageOptions
+     /// </remarks>
+     [JsonPropertyName("viewport")]
+     public ViewportSize? ViewportSize { get; set; }
++
++    [JsonPropertyName("focusControl")]
++    public bool? FocusControl { get; set; }
+ }
+diff --git a/src/Playwright/API/Generated/Options/BrowserTypeLaunchOptions.cs b/src/Playwright/API/Generated/Options/BrowserTypeLaunchOptions.cs
+index d41cba61..f8e73fda 100644
+--- a/src/Playwright/API/Generated/Options/BrowserTypeLaunchOptions.cs
++++ b/src/Playwright/API/Generated/Options/BrowserTypeLaunchOptions.cs
+@@ -56,6 +56,7 @@ public class BrowserTypeLaunchOptions
+         SlowMo = clone.SlowMo;
+         Timeout = clone.Timeout;
+         TracesDir = clone.TracesDir;
++        FocusControl = clone.FocusControl;
+     }
+ 
+     /// <summary>
+@@ -212,4 +213,7 @@ public class BrowserTypeLaunchOptions
+     /// <summary><para>If specified, traces are saved into this directory.</para></summary>
+     [JsonPropertyName("tracesDir")]
+     public string? TracesDir { get; set; }
++
++    [JsonPropertyName("focusControl")]
++    public bool? FocusControl { get; set; }
+ }
+diff --git a/src/Playwright/API/Generated/Options/BrowserTypeLaunchPersistentContextOptions.cs b/src/Playwright/API/Generated/Options/BrowserTypeLaunchPersistentContextOptions.cs
+index 83ff8f08..44b3c90c 100644
+--- a/src/Playwright/API/Generated/Options/BrowserTypeLaunchPersistentContextOptions.cs
++++ b/src/Playwright/API/Generated/Options/BrowserTypeLaunchPersistentContextOptions.cs
+@@ -91,6 +91,7 @@ public class BrowserTypeLaunchPersistentContextOptions
+         TracesDir = clone.TracesDir;
+         UserAgent = clone.UserAgent;
+         ViewportSize = clone.ViewportSize;
++        FocusControl = clone.FocusControl;
+     }
+ 
+     /// <summary>
+@@ -599,4 +600,7 @@ public class BrowserTypeLaunchPersistentContextOptions
+     /// </remarks>
+     [JsonPropertyName("viewport")]
+     public ViewportSize? ViewportSize { get; set; }
++
++    [JsonPropertyName("focusControl")]
++    public bool? FocusControl { get; set; }
+ }
+diff --git a/src/Playwright/API/Supplements/IFrame.cs b/src/Playwright/API/Supplements/IFrame.cs
+index 79a83803..f09b5eec 100644
+--- a/src/Playwright/API/Supplements/IFrame.cs
++++ b/src/Playwright/API/Supplements/IFrame.cs
+@@ -29,9 +29,9 @@ namespace Microsoft.Playwright;
+ 
+ public partial interface IFrame
+ {
+-    Task<JsonElement?> EvaluateAsync(string expression, object? arg = default);
++    Task<JsonElement?> EvaluateAsync(string expression, object? arg = default, bool isolatedContext = true);
+ 
+-    Task<JsonElement?> EvalOnSelectorAsync(string selector, string expression, object? arg = default);
++    Task<JsonElement?> EvalOnSelectorAsync(string selector, string expression, object? arg = default, bool isolatedContext = true);
+ 
+-    Task<JsonElement?> EvalOnSelectorAllAsync(string selector, string expression, object? arg = default);
++    Task<JsonElement?> EvalOnSelectorAllAsync(string selector, string expression, object? arg = default, bool isolatedContext = true);
+ }
+diff --git a/src/Playwright/API/Supplements/IJSHandle.cs b/src/Playwright/API/Supplements/IJSHandle.cs
+index fdb1e8c8..f60b23d2 100644
+--- a/src/Playwright/API/Supplements/IJSHandle.cs
++++ b/src/Playwright/API/Supplements/IJSHandle.cs
+@@ -30,6 +30,6 @@ namespace Microsoft.Playwright;
+ 
+ public partial interface IJSHandle : IAsyncDisposable
+ {
+-    /// <inheritdoc cref="EvaluateAsync{T}(string, object)" />
+-    Task<JsonElement?> EvaluateAsync(string expression, object? arg = null);
++    /// <inheritdoc cref="EvaluateAsync{T}(string, object, bool)" />
++    Task<JsonElement?> EvaluateAsync(string expression, object? arg = null, bool isolatedContext = true);
+ }
+diff --git a/src/Playwright/API/Supplements/ILocator.cs b/src/Playwright/API/Supplements/ILocator.cs
+index a751af1f..46e90abc 100644
+--- a/src/Playwright/API/Supplements/ILocator.cs
++++ b/src/Playwright/API/Supplements/ILocator.cs
+@@ -29,5 +29,5 @@ namespace Microsoft.Playwright;
+ 
+ public partial interface ILocator
+ {
+-    Task<JsonElement?> EvaluateAsync(string expression, object? arg = null, LocatorEvaluateOptions? options = null);
++    Task<JsonElement?> EvaluateAsync(string expression, object? arg = null, LocatorEvaluateOptions? options = null, bool isolatedContext = true);
+ }
+diff --git a/src/Playwright/API/Supplements/IPage.cs b/src/Playwright/API/Supplements/IPage.cs
+index d0e787a3..ee3b7b05 100644
+--- a/src/Playwright/API/Supplements/IPage.cs
++++ b/src/Playwright/API/Supplements/IPage.cs
+@@ -31,11 +31,11 @@ namespace Microsoft.Playwright;
+ 
+ public partial interface IPage
+ {
+-    Task<JsonElement?> EvaluateAsync(string expression, object? arg = default);
++    Task<JsonElement?> EvaluateAsync(string expression, object? arg = default, bool isolatedContext = true);
+ 
+-    Task<JsonElement?> EvalOnSelectorAsync(string selector, string expression, object? arg = default);
++    Task<JsonElement?> EvalOnSelectorAsync(string selector, string expression, object? arg = default, bool isolatedContext = true);
+ 
+-    Task<JsonElement?> EvalOnSelectorAllAsync(string selector, string expression, object? arg = default);
++    Task<JsonElement?> EvalOnSelectorAllAsync(string selector, string expression, object? arg = default, bool isolatedContext = true);
+ 
+     Task ExposeBindingAsync(string name, Action<BindingSource> callback);
+ 
+diff --git a/src/Playwright/Core/Browser.cs b/src/Playwright/Core/Browser.cs
+index f12a4b19..bf8fdf2e 100644
+--- a/src/Playwright/Core/Browser.cs
++++ b/src/Playwright/Core/Browser.cs
+@@ -107,6 +107,7 @@ internal class Browser : ChannelOwner, IBrowser
+ 
+         var args = new Dictionary<string, object?>
+         {
++            ["focusControl"] = options.FocusControl,
+             ["bypassCSP"] = options.BypassCSP,
+             ["deviceScaleFactor"] = options.DeviceScaleFactor,
+             ["serviceWorkers"] = options.ServiceWorkers,
+@@ -178,6 +179,7 @@ internal class Browser : ChannelOwner, IBrowser
+ 
+         var contextOptions = new BrowserNewContextOptions()
+         {
++            FocusControl = options.FocusControl,
+             AcceptDownloads = options.AcceptDownloads,
+             IgnoreHTTPSErrors = options.IgnoreHTTPSErrors,
+             BypassCSP = options.BypassCSP,
+diff --git a/src/Playwright/Core/BrowserContext.cs b/src/Playwright/Core/BrowserContext.cs
+index 872cd70f..5ccc9620 100644
+--- a/src/Playwright/Core/BrowserContext.cs
++++ b/src/Playwright/Core/BrowserContext.cs
+@@ -299,19 +299,21 @@ internal class BrowserContext : ChannelOwner, IBrowserContext
+             });
+ 
+     [MethodImpl(MethodImplOptions.NoInlining)]
+-    public Task AddInitScriptAsync(string? script = null, string? scriptPath = null)
++    public async Task AddInitScriptAsync(string? script = null, string? scriptPath = null)
+     {
++        await InstallInjectRouteAsync().ConfigureAwait(false);
++
+         if (string.IsNullOrEmpty(script))
+         {
+             script = ScriptsHelper.EvaluationScript(script, scriptPath, true);
+         }
+ 
+-        return SendMessageToServerAsync(
++        await SendMessageToServerAsync(
+             "addInitScript",
+             new Dictionary<string, object?>
+             {
+                 ["source"] = script,
+-            });
++            }).ConfigureAwait(false);
+     }
+ 
+     [MethodImpl(MethodImplOptions.NoInlining)]
+@@ -827,6 +829,8 @@ internal class BrowserContext : ChannelOwner, IBrowserContext
+ 
+     private async Task ExposeBindingAsync(string name, Delegate callback, bool handle = false)
+     {
++        await InstallInjectRouteAsync().ConfigureAwait(false);
++
+         foreach (var page in _pages)
+         {
+             if (page.Bindings.ContainsKey(name))
+@@ -955,6 +959,41 @@ internal class BrowserContext : ChannelOwner, IBrowserContext
+             ["patterns"] = patterns,
+         }).ConfigureAwait(false);
+     }
++
++    public bool RouteInjecting { get; private set; }
++
++    [MethodImpl(MethodImplOptions.NoInlining)]
++    public async Task InstallInjectRouteAsync()
++    {
++        if (RouteInjecting)
++        {
++            return;
++        }
++
++        await RouteAsync("**/*", async route =>
++        {
++            try
++            {
++                var request = route.Request;
++                if (request.ResourceType.Equals("document", StringComparison.OrdinalIgnoreCase) &&
++                    request.Url.StartsWith("http", StringComparison.OrdinalIgnoreCase))
++                {
++                    var protocol = request.Url.Split(':')[0];
++                    await route.FallbackAsync(new RouteFallbackOptions { Url = protocol + "://patchright-init-script-inject.internal/" }).ConfigureAwait(false);
++                }
++                else
++                {
++                    await route.FallbackAsync().ConfigureAwait(false);
++                }
++            }
++            catch
++            {
++                await route.FallbackAsync().ConfigureAwait(false);
++            }
++        }).ConfigureAwait(false);
++
++        RouteInjecting = true;
++    }
+ }
+ 
+ internal class HarRecorder
+diff --git a/src/Playwright/Core/BrowserType.cs b/src/Playwright/Core/BrowserType.cs
+index dac24326..8d64ea94 100644
+--- a/src/Playwright/Core/BrowserType.cs
++++ b/src/Playwright/Core/BrowserType.cs
+@@ -57,6 +57,7 @@ internal class BrowserType : ChannelOwner, IBrowserType
+             "launch",
+             new Dictionary<string, object?>
+             {
++                { "focusControl", options.FocusControl },
+                 { "channel", options.Channel },
+                 { "executablePath", options.ExecutablePath },
+                 { "args", options.Args },
+@@ -88,6 +89,7 @@ internal class BrowserType : ChannelOwner, IBrowserType
+         options ??= new BrowserTypeLaunchPersistentContextOptions();
+         var channelArgs = new Dictionary<string, object?>
+         {
++            ["focusControl"] = options.FocusControl,
+             ["userDataDir"] = !string.IsNullOrEmpty(userDataDir) ? System.IO.Path.Combine(Environment.CurrentDirectory, userDataDir) : userDataDir,
+             ["headless"] = options.Headless,
+             ["channel"] = options.Channel,
+diff --git a/src/Playwright/Core/Clock.cs b/src/Playwright/Core/Clock.cs
+index 17a56a2d..7438bc22 100644
+--- a/src/Playwright/Core/Clock.cs
++++ b/src/Playwright/Core/Clock.cs
+@@ -32,6 +32,8 @@ internal class Clock(BrowserContext browserContext) : IClock
+ {
+     public async Task InstallAsync(ClockInstallOptions? options = null)
+     {
++        await browserContext.InstallInjectRouteAsync().ConfigureAwait(false);
++
+         options ??= new();
+         Dictionary<string, object?> args = null!;
+         if ((options.TimeString ?? options.Time) != null)
+diff --git a/src/Playwright/Core/Frame.cs b/src/Playwright/Core/Frame.cs
+index 51563c8a..1a0571b7 100644
+--- a/src/Playwright/Core/Frame.cs
++++ b/src/Playwright/Core/Frame.cs
+@@ -690,60 +690,63 @@ internal class Frame : ChannelOwner, IFrame
+             }).ConfigureAwait(false);
+ 
+     [MethodImpl(MethodImplOptions.NoInlining)]
+-    public async Task<IJSHandle> EvaluateHandleAsync(string script, object? args = null)
++    public async Task<IJSHandle> EvaluateHandleAsync(string script, object? args = null, bool isolatedContext = true)
+         => await SendMessageToServerAsync<JSHandle>(
+             "evaluateExpressionHandle",
+             new Dictionary<string, object?>
+             {
+                 ["expression"] = script,
+                 ["arg"] = ScriptsHelper.SerializedArgument(args),
++                ["isolatedContext"] = isolatedContext,
+             }).ConfigureAwait(false);
+ 
+     [MethodImpl(MethodImplOptions.NoInlining)]
+-    public async Task<JsonElement?> EvaluateAsync(string script, object? arg = null)
++    public async Task<JsonElement?> EvaluateAsync(string script, object? arg = null, bool isolatedContext = true)
+         => ScriptsHelper.ParseEvaluateResult<JsonElement?>(await SendMessageToServerAsync<JsonElement?>(
+             "evaluateExpression",
+             new Dictionary<string, object?>
+             {
+                 ["expression"] = script,
+                 ["arg"] = ScriptsHelper.SerializedArgument(arg),
++                ["isolatedContext"] = isolatedContext,
+             }).ConfigureAwait(false));
+ 
+     [MethodImpl(MethodImplOptions.NoInlining)]
+-    public async Task<T> EvaluateAsync<T>(string script, object? arg = null)
++    public async Task<T> EvaluateAsync<T>(string script, object? arg = null, bool isolatedContext = true)
+         => ScriptsHelper.ParseEvaluateResult<T>(await SendMessageToServerAsync<JsonElement?>(
+             "evaluateExpression",
+             new Dictionary<string, object?>
+             {
+                 ["expression"] = script,
+                 ["arg"] = ScriptsHelper.SerializedArgument(arg),
++                ["isolatedContext"] = isolatedContext,
+             }).ConfigureAwait(false));
+ 
+     [MethodImpl(MethodImplOptions.NoInlining)]
+-    public async Task<JsonElement?> EvalOnSelectorAsync(string selector, string script, object? arg = null)
++    public async Task<JsonElement?> EvalOnSelectorAsync(string selector, string script, object? arg = null, bool isolatedContext = true)
+         => ScriptsHelper.ParseEvaluateResult<JsonElement?>(await _evalOnSelectorAsync(
+             selector: selector,
+             script,
+             arg: ScriptsHelper.SerializedArgument(arg),
+-            strict: null).ConfigureAwait(false));
++            strict: null, isolatedContext: isolatedContext).ConfigureAwait(false));
+ 
+     [MethodImpl(MethodImplOptions.NoInlining)]
+-    public async Task<T> EvalOnSelectorAsync<T>(string selector, string script, object? arg = null)
++    public async Task<T> EvalOnSelectorAsync<T>(string selector, string script, object? arg = null, bool isolatedContext = true)
+         => ScriptsHelper.ParseEvaluateResult<T>(await _evalOnSelectorAsync(
+             selector: selector,
+             script,
+             arg: ScriptsHelper.SerializedArgument(arg),
+-            strict: null).ConfigureAwait(false));
++            strict: null, isolatedContext: isolatedContext).ConfigureAwait(false));
+ 
+     [MethodImpl(MethodImplOptions.NoInlining)]
+-    public async Task<T> EvalOnSelectorAsync<T>(string selector, string expression, object? arg = null, FrameEvalOnSelectorOptions? options = null)
++    public async Task<T> EvalOnSelectorAsync<T>(string selector, string expression, object? arg = null, FrameEvalOnSelectorOptions? options = null, bool isolatedContext = true)
+         => ScriptsHelper.ParseEvaluateResult<T>(await _evalOnSelectorAsync(
+             selector: selector,
+             expression,
+             arg: ScriptsHelper.SerializedArgument(arg),
+-            strict: options?.Strict).ConfigureAwait(false));
++            strict: options?.Strict, isolatedContext: isolatedContext).ConfigureAwait(false));
+ 
+-    private Task<JsonElement?> _evalOnSelectorAsync(string selector, string script, object arg, bool? strict)
++    private Task<JsonElement?> _evalOnSelectorAsync(string selector, string script, object arg, bool? strict, bool isolatedContext = true)
+         => SendMessageToServerAsync<JsonElement?>(
+             "evalOnSelector",
+             new Dictionary<string, object?>
+@@ -752,23 +755,24 @@ internal class Frame : ChannelOwner, IFrame
+                 ["expression"] = script,
+                 ["arg"] = arg,
+                 ["strict"] = strict,
++                ["isolatedContext"] = isolatedContext,
+             });
+ 
+     [MethodImpl(MethodImplOptions.NoInlining)]
+-    public async Task<JsonElement?> EvalOnSelectorAllAsync(string selector, string script, object? arg = null)
++    public async Task<JsonElement?> EvalOnSelectorAllAsync(string selector, string script, object? arg = null, bool isolatedContext = true)
+         => ScriptsHelper.ParseEvaluateResult<JsonElement?>(await _evalOnSelectorAllAsync(
+             selector: selector,
+             script,
+-            arg: ScriptsHelper.SerializedArgument(arg)).ConfigureAwait(false));
++            arg: ScriptsHelper.SerializedArgument(arg), isolatedContext: isolatedContext).ConfigureAwait(false));
+ 
+     [MethodImpl(MethodImplOptions.NoInlining)]
+-    public async Task<T> EvalOnSelectorAllAsync<T>(string selector, string script, object? arg = null)
++    public async Task<T> EvalOnSelectorAllAsync<T>(string selector, string script, object? arg = null, bool isolatedContext = true)
+         => ScriptsHelper.ParseEvaluateResult<T>(await _evalOnSelectorAllAsync(
+             selector: selector,
+             script,
+-            arg: ScriptsHelper.SerializedArgument(arg)).ConfigureAwait(false));
++            arg: ScriptsHelper.SerializedArgument(arg), isolatedContext: isolatedContext).ConfigureAwait(false));
+ 
+-    private Task<JsonElement?> _evalOnSelectorAllAsync(string selector, string script, object arg)
++    private Task<JsonElement?> _evalOnSelectorAllAsync(string selector, string script, object arg, bool isolatedContext = true)
+         => SendMessageToServerAsync<JsonElement?>(
+             "evalOnSelectorAll",
+             new Dictionary<string, object?>
+@@ -776,6 +780,7 @@ internal class Frame : ChannelOwner, IFrame
+                 ["selector"] = selector,
+                 ["expression"] = script,
+                 ["arg"] = arg,
++                ["isolatedContext"] = isolatedContext,
+             });
+ 
+     [MethodImpl(MethodImplOptions.NoInlining)]
+diff --git a/src/Playwright/Core/JSHandle.cs b/src/Playwright/Core/JSHandle.cs
+index 3c6ab27b..2f1d3e01 100644
+--- a/src/Playwright/Core/JSHandle.cs
++++ b/src/Playwright/Core/JSHandle.cs
+@@ -46,33 +46,36 @@ internal class JSHandle : ChannelOwner, IJSHandle
+     public IElementHandle AsElement() => (IElementHandle)this;
+ 
+     [MethodImpl(MethodImplOptions.NoInlining)]
+-    public async Task<JsonElement?> EvaluateAsync(string expression, object? arg = null)
++    public async Task<JsonElement?> EvaluateAsync(string expression, object? arg = null, bool isolatedContext = true)
+         => ScriptsHelper.ParseEvaluateResult<JsonElement?>(await SendMessageToServerAsync<JsonElement?>(
+             "evaluateExpression",
+             new Dictionary<string, object?>
+             {
+                 ["expression"] = expression,
+                 ["arg"] = ScriptsHelper.SerializedArgument(arg),
++                ["isolatedContext"] = isolatedContext,
+             }).ConfigureAwait(false));
+ 
+     [MethodImpl(MethodImplOptions.NoInlining)]
+-    public async Task<IJSHandle> EvaluateHandleAsync(string expression, object? arg = null)
++    public async Task<IJSHandle> EvaluateHandleAsync(string expression, object? arg = null, bool isolatedContext = true)
+         => await SendMessageToServerAsync<JSHandle>(
+             "evaluateExpressionHandle",
+             new Dictionary<string, object?>
+             {
+                 ["expression"] = expression,
+                 ["arg"] = ScriptsHelper.SerializedArgument(arg),
++                ["isolatedContext"] = isolatedContext,
+             }).ConfigureAwait(false);
+ 
+     [MethodImpl(MethodImplOptions.NoInlining)]
+-    public async Task<T> EvaluateAsync<T>(string expression, object? arg = null)
++    public async Task<T> EvaluateAsync<T>(string expression, object? arg = null, bool isolatedContext = true)
+         => ScriptsHelper.ParseEvaluateResult<T>(await SendMessageToServerAsync<JsonElement?>(
+             "evaluateExpression",
+             new Dictionary<string, object?>
+             {
+                 ["expression"] = expression,
+                 ["arg"] = ScriptsHelper.SerializedArgument(arg),
++                ["isolatedContext"] = isolatedContext,
+             }).ConfigureAwait(false));
+ 
+     [MethodImpl(MethodImplOptions.NoInlining)]
+diff --git a/src/Playwright/Core/Locator.cs b/src/Playwright/Core/Locator.cs
+index 5a7f88b3..a662f17c 100644
+--- a/src/Playwright/Core/Locator.cs
++++ b/src/Playwright/Core/Locator.cs
+@@ -156,20 +156,20 @@ internal class Locator : ILocator
+     public Task DragToAsync(ILocator target, LocatorDragToOptions? options = null)
+         => _frame.DragAndDropAsync(_selector, ((Locator)target)._selector, ConvertOptions<FrameDragAndDropOptions>(options));
+ 
+-    public Task<JsonElement?> EvaluateAsync(string expression, object? arg = null, LocatorEvaluateOptions? options = null)
+-        => EvaluateAsync<JsonElement?>(expression, arg, options);
++    public Task<JsonElement?> EvaluateAsync(string expression, object? arg = null, LocatorEvaluateOptions? options = null, bool isolatedContext = true)
++        => EvaluateAsync<JsonElement?>(expression, arg, options, isolatedContext: isolatedContext);
+ 
+-    public Task<T> EvaluateAsync<T>(string expression, object? arg = null, LocatorEvaluateOptions? options = null)
++    public Task<T> EvaluateAsync<T>(string expression, object? arg = null, LocatorEvaluateOptions? options = null, bool isolatedContext = true)
+         => WithElementAsync(
+-            (h, _) => h.EvaluateAsync<T>(expression, arg),
++            (h, _) => h.EvaluateAsync<T>(expression, arg, isolatedContext: isolatedContext),
+             options?.Timeout,
+             "Evaluate");
+ 
+-    public Task<T> EvaluateAllAsync<T>(string expression, object? arg = null)
+-        => _frame.EvalOnSelectorAllAsync<T>(_selector, expression, arg);
++    public Task<T> EvaluateAllAsync<T>(string expression, object? arg = null, bool isolatedContext = true)
++        => _frame.EvalOnSelectorAllAsync<T>(_selector, expression, arg, isolatedContext: isolatedContext);
+ 
+-    public Task<IJSHandle> EvaluateHandleAsync(string expression, object? arg = null, LocatorEvaluateHandleOptions? options = null)
+-        => WithElementAsync((e, _) => e.EvaluateHandleAsync(expression, arg), options?.Timeout, "Evaluate");
++    public Task<IJSHandle> EvaluateHandleAsync(string expression, object? arg = null, LocatorEvaluateHandleOptions? options = null, bool isolatedContext = true)
++        => WithElementAsync((e, _) => e.EvaluateHandleAsync(expression, arg, isolatedContext: isolatedContext), options?.Timeout, "Evaluate");
+ 
+     public Task FillAsync(string value, LocatorFillOptions? options = null)
+         => _frame.FillAsync(_selector, value, ConvertOptions<FrameFillOptions>(options));
+diff --git a/src/Playwright/Core/Page.cs b/src/Playwright/Core/Page.cs
+index a2b3002e..b2d0be1c 100644
+--- a/src/Playwright/Core/Page.cs
++++ b/src/Playwright/Core/Page.cs
+@@ -527,14 +527,14 @@ internal class Page : ChannelOwner, IPage
+     }
+ 
+     [MethodImpl(MethodImplOptions.NoInlining)]
+-    public Task<T> EvaluateAsync<T>(string expression, object? arg) => MainFrame.EvaluateAsync<T>(expression, arg);
++    public Task<T> EvaluateAsync<T>(string expression, object? arg, bool isolatedContext = true) => MainFrame.EvaluateAsync<T>(expression, arg, isolatedContext: isolatedContext);
+ 
+     [MethodImpl(MethodImplOptions.NoInlining)]
+-    public Task<JsonElement?> EvalOnSelectorAsync(string selector, string expression, object? arg) => MainFrame.EvalOnSelectorAsync(selector, expression, arg);
++    public Task<JsonElement?> EvalOnSelectorAsync(string selector, string expression, object? arg, bool isolatedContext = true) => MainFrame.EvalOnSelectorAsync(selector, expression, arg, isolatedContext: isolatedContext);
+ 
+     [MethodImpl(MethodImplOptions.NoInlining)]
+-    public Task<T> EvalOnSelectorAsync<T>(string selector, string expression, object? arg = null, PageEvalOnSelectorOptions? options = null)
+-        => MainFrame.EvalOnSelectorAsync<T>(selector, expression, arg, new() { Strict = options?.Strict });
++    public Task<T> EvalOnSelectorAsync<T>(string selector, string expression, object? arg = null, PageEvalOnSelectorOptions? options = null, bool isolatedContext = true)
++        => MainFrame.EvalOnSelectorAsync<T>(selector, expression, arg, new() { Strict = options?.Strict }, isolatedContext: isolatedContext);
+ 
+     [MethodImpl(MethodImplOptions.NoInlining)]
+     public ILocator Locator(string selector, PageLocatorOptions? options = default)
+@@ -551,13 +551,13 @@ internal class Page : ChannelOwner, IPage
+         => MainFrame.QuerySelectorAsync(selector, new() { Strict = options?.Strict });
+ 
+     [MethodImpl(MethodImplOptions.NoInlining)]
+-    public Task<T> EvalOnSelectorAsync<T>(string selector, string expression, object? arg) => MainFrame.EvalOnSelectorAsync<T>(selector, expression, arg);
++    public Task<T> EvalOnSelectorAsync<T>(string selector, string expression, object? arg, bool isolatedContext = true) => MainFrame.EvalOnSelectorAsync<T>(selector, expression, arg, isolatedContext: isolatedContext);
+ 
+     [MethodImpl(MethodImplOptions.NoInlining)]
+-    public Task<JsonElement?> EvalOnSelectorAllAsync(string selector, string expression, object? arg) => MainFrame.EvalOnSelectorAllAsync(selector, expression, arg);
++    public Task<JsonElement?> EvalOnSelectorAllAsync(string selector, string expression, object? arg, bool isolatedContext = true) => MainFrame.EvalOnSelectorAllAsync(selector, expression, arg, isolatedContext: isolatedContext);
+ 
+     [MethodImpl(MethodImplOptions.NoInlining)]
+-    public Task<T> EvalOnSelectorAllAsync<T>(string selector, string expression, object? arg) => MainFrame.EvalOnSelectorAllAsync<T>(selector, expression, arg);
++    public Task<T> EvalOnSelectorAllAsync<T>(string selector, string expression, object? arg, bool isolatedContext = true) => MainFrame.EvalOnSelectorAllAsync<T>(selector, expression, arg, isolatedContext: isolatedContext);
+ 
+     [MethodImpl(MethodImplOptions.NoInlining)]
+     public Task FillAsync(string selector, string value, PageFillOptions? options = default)
+@@ -680,7 +680,7 @@ internal class Page : ChannelOwner, IPage
+         });
+ 
+     [MethodImpl(MethodImplOptions.NoInlining)]
+-    public Task<JsonElement?> EvaluateAsync(string expression, object? arg) => MainFrame.EvaluateAsync(expression, arg);
++    public Task<JsonElement?> EvaluateAsync(string expression, object? arg, bool isolatedContext = true) => MainFrame.EvaluateAsync(expression, arg, isolatedContext: isolatedContext);
+ 
+     [MethodImpl(MethodImplOptions.NoInlining)]
+     public async Task<byte[]> ScreenshotAsync(PageScreenshotOptions? options = default)
+@@ -745,7 +745,7 @@ internal class Page : ChannelOwner, IPage
+         => MainFrame.QuerySelectorAllAsync(selector);
+ 
+     [MethodImpl(MethodImplOptions.NoInlining)]
+-    public Task<IJSHandle> EvaluateHandleAsync(string expression, object? arg) => MainFrame.EvaluateHandleAsync(expression, arg);
++    public Task<IJSHandle> EvaluateHandleAsync(string expression, object? arg, bool isolatedContext = true) => MainFrame.EvaluateHandleAsync(expression, arg, isolatedContext: isolatedContext);
+ 
+     [MethodImpl(MethodImplOptions.NoInlining)]
+     public Task<IElementHandle> AddScriptTagAsync(PageAddScriptTagOptions? options = default)
+@@ -922,13 +922,17 @@ internal class Page : ChannelOwner, IPage
+     }
+ 
+     [MethodImpl(MethodImplOptions.NoInlining)]
+-    public Task AddInitScriptAsync(string? script, string? scriptPath)
+-        => SendMessageToServerAsync(
++    public async Task AddInitScriptAsync(string? script, string? scriptPath)
++    {
++        await InstallInjectRouteAsync().ConfigureAwait(false);
++
++        await SendMessageToServerAsync(
+             "addInitScript",
+             new Dictionary<string, object?>
+             {
+                 ["source"] = ScriptsHelper.EvaluationScript(script, scriptPath, true),
+-            });
++            }).ConfigureAwait(false);
++    }
+ 
+     [MethodImpl(MethodImplOptions.NoInlining)]
+     public Task RouteAsync(string globMatch, Func<IRoute, Task> handler, PageRouteOptions? options = null)
+@@ -1371,6 +1375,8 @@ internal class Page : ChannelOwner, IPage
+ 
+     private async Task InnerExposeBindingAsync(string name, Delegate callback, bool handle = false)
+     {
++        await InstallInjectRouteAsync().ConfigureAwait(false);
++
+         if (Bindings.ContainsKey(name))
+         {
+             throw new PlaywrightException($"Function \"{name}\" has been already registered");
+@@ -1632,6 +1638,41 @@ internal class Page : ChannelOwner, IPage
+             ["patterns"] = patterns,
+         }).ConfigureAwait(false);
+     }
++
++    public bool RouteInjecting { get; private set; }
++
++    [MethodImpl(MethodImplOptions.NoInlining)]
++    public async Task InstallInjectRouteAsync()
++    {
++        if (RouteInjecting || Context.RouteInjecting)
++        {
++            return;
++        }
++
++        await RouteAsync("**/*", async route =>
++        {
++            try
++            {
++                var request = route.Request;
++                if (request.ResourceType.Equals("document", StringComparison.OrdinalIgnoreCase) &&
++                    request.Url.StartsWith("http", StringComparison.OrdinalIgnoreCase))
++                {
++                    var protocol = request.Url.Split(':')[0];
++                    await route.FallbackAsync(new RouteFallbackOptions { Url = protocol + "://patchright-init-script-inject.internal/" }).ConfigureAwait(false);
++                }
++                else
++                {
++                    await route.FallbackAsync().ConfigureAwait(false);
++                }
++            }
++            catch
++            {
++                await route.FallbackAsync().ConfigureAwait(false);
++            }
++        }).ConfigureAwait(false);
++
++        RouteInjecting = true;
++    }
+ }
+ 
+ internal class LocatorHandler
+diff --git a/src/Playwright/Core/ScriptsHelper.cs b/src/Playwright/Core/ScriptsHelper.cs
+index 36ca9a2d..de4fa23f 100644
+--- a/src/Playwright/Core/ScriptsHelper.cs
++++ b/src/Playwright/Core/ScriptsHelper.cs
+@@ -91,7 +91,7 @@ internal static class ScriptsHelper
+ 
+     internal static string AddSourceUrlToScript(string source, string path)
+     {
+-        return source + "\n//# sourceURL=" + path.Replace("\n", string.Empty);
++        return source;
+     }
+ }
+ 
+diff --git a/src/Playwright/Core/Tracing.cs b/src/Playwright/Core/Tracing.cs
+index 341ab1a0..3e720eea 100644
+--- a/src/Playwright/Core/Tracing.cs
++++ b/src/Playwright/Core/Tracing.cs
+@@ -46,6 +46,8 @@ internal class Tracing : ChannelOwner, ITracing
+     [MethodImpl(MethodImplOptions.NoInlining)]
+     public async Task StartAsync(TracingStartOptions? options = default)
+     {
++        await ((BrowserContext)Parent!).InstallInjectRouteAsync().ConfigureAwait(false);
++
+         _includeSources = options?.Sources == true;
+         await SendMessageToServerAsync(
+         "tracingStart",
+diff --git a/src/Playwright/Core/Worker.cs b/src/Playwright/Core/Worker.cs
+index 1ff9f711..c2d6d370 100644
+--- a/src/Playwright/Core/Worker.cs
++++ b/src/Playwright/Core/Worker.cs
+@@ -80,23 +80,25 @@ internal class Worker : ChannelOwner, IWorker
+     }
+ 
+     [MethodImpl(MethodImplOptions.NoInlining)]
+-    public async Task<T> EvaluateAsync<T>(string expression, object? arg = null)
++    public async Task<T> EvaluateAsync<T>(string expression, object? arg = null, bool isolatedContext = true)
+         => ScriptsHelper.ParseEvaluateResult<T>((await SendMessageToServerAsync(
+                 "evaluateExpression",
+                 new Dictionary<string, object?>
+                 {
+                     ["expression"] = expression,
+                     ["arg"] = ScriptsHelper.SerializedArgument(arg),
++                    ["isolatedContext"] = isolatedContext,
+                 }).ConfigureAwait(false)).Value.GetProperty("value"));
+ 
+     [MethodImpl(MethodImplOptions.NoInlining)]
+-    public async Task<IJSHandle> EvaluateHandleAsync(string expression, object? arg = null)
++    public async Task<IJSHandle> EvaluateHandleAsync(string expression, object? arg = null, bool isolatedContext = true)
+         => (await SendMessageToServerAsync<JsonElement>(
+             "evaluateExpressionHandle",
+             new Dictionary<string, object?>
+             {
+                 ["expression"] = expression,
+                 ["arg"] = ScriptsHelper.SerializedArgument(arg),
++                ["isolatedContext"] = isolatedContext,
+             })
+             .ConfigureAwait(false)).GetObject<JSHandle>("handle", _connection);
+ 
+diff --git a/src/Playwright/Playwright.csproj b/src/Playwright/Playwright.csproj
+index 45dbd041..ff497127 100644
+--- a/src/Playwright/Playwright.csproj
++++ b/src/Playwright/Playwright.csproj
+@@ -2,17 +2,17 @@
+ <Project Sdk="Microsoft.NET.Sdk">
+   <PropertyGroup>
+     <OutputType>Exe</OutputType>
+-    <Title>Microsoft.Playwright</Title>
+-    <PackageId>Microsoft.Playwright</PackageId>
+-    <Summary>The .NET port of Playwright, used to automate Chromium, Firefox and WebKit with a single API.</Summary>
+-    <Description>Playwright enables reliable end-to-end testing for modern web apps. It is built to enable cross-browser web automation that is ever-green, capable, reliable and fast. Learn more at https://playwright.dev/dotnet/.</Description>
++    <Title>Patchright</Title>
++    <PackageId>Patchright</PackageId>
++    <Summary>The .NET port of Playwright patched with Patchright, used to automate Chromium with a single API.</Summary>
++    <Description>Undetected .NET version of the Playwright testing and automation library.</Description>
+     <PackageIcon>icon.png</PackageIcon>
+     <TargetFramework>netstandard2.0</TargetFramework>
+     <PublishRepositoryUrl>true</PublishRepositoryUrl>
+     <DocumentationFile>Microsoft.Playwright.xml</DocumentationFile>
+     <RunWithWarnings>true</RunWithWarnings>
+     <StyleCopTreatErrorsAsWarnings>false</StyleCopTreatErrorsAsWarnings>
+-    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
++    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+     <RootNamespace>Microsoft.Playwright</RootNamespace>
+     <ReleaseVersion>0.0.0</ReleaseVersion>
+     <BuildFromSource>True</BuildFromSource>
+@@ -20,7 +20,7 @@
+     <NoWarn>1701;1702;CS0067;1734;NU5110;NU5111;CP0006</NoWarn>
+     <AssemblyName>Microsoft.Playwright</AssemblyName>
+     <NoWin32Manifest>true</NoWin32Manifest>
+-    <EnablePackageValidation>true</EnablePackageValidation>
++    <EnablePackageValidation>false</EnablePackageValidation>
+     <PackageValidationBaselineVersion>1.52.0</PackageValidationBaselineVersion>
+     <Nullable>enable</Nullable>
+     <PackageReadmeFile>README.md</PackageReadmeFile>
+@@ -60,4 +60,4 @@
+   <Target Name="EnsurePrerequisitsRan" BeforeTargets="GetCopyToOutputDirectoryItems">
+     <Error Text="Playwright prerequisites are missing. Ensure you've ran `dotnet run --project ./src/tools/Playwright.Tooling/Playwright.Tooling.csproj -- download-drivers --basepath .`" Condition="!Exists('$(MSBuildProjectDirectory)\.drivers')" />
+   </Target>
+-</Project>
++</Project>
+\ No newline at end of file
+diff --git a/src/tools/Playwright.Tooling/DriverDownloader.cs b/src/tools/Playwright.Tooling/DriverDownloader.cs
+index b204ec80..53c9fe79 100644
+--- a/src/tools/Playwright.Tooling/DriverDownloader.cs
++++ b/src/tools/Playwright.Tooling/DriverDownloader.cs
+@@ -100,7 +100,7 @@ internal class DriverDownloader
+     private async Task DownloadDriverAsync(DirectoryInfo destinationDirectory, string driverVersion, string platform)
+     {
+         Console.WriteLine("Downloading driver for " + platform);
+-        string cdn = "https://playwright.azureedge.net/builds/driver";
++        string cdn = "https://github.com/Kaliiiiiiiiii-Vinyzu/patchright/releases/download";
+         if (
+             driverVersion.Contains("-alpha")
+             || driverVersion.Contains("-beta")
+@@ -113,7 +113,7 @@ internal class DriverDownloader
+         client.Timeout = TimeSpan.FromMinutes(5);
+         // Azure seems to not like requests without a user agent.
+         client.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36");
+-        string url = $"{cdn}/playwright-{driverVersion}-{platform}.zip";
++        string url = $"{cdn}/v{driverVersion}/playwright-{driverVersion}-{platform}.zip";
+ 
+         try
+         {

@@ -15,7 +15,10 @@
     </a>
     <br/>
     <a href="https://github.com/DevEnterpriseSoftware/patchright-dotnet/releases/latest">
-        <img alt="Patchright Version" src="https://img.shields.io/github/v/release/microsoft/playwright-dotnet?display_name=release&label=Version">
+        <img src="https://img.shields.io/github/v/release/DevEnterpriseSoftware/patchright-dotnet?display_name=release&label=Version">
+    </a>
+    <a href="hhttps://www.nuget.org/packages/Patchright">
+        <img src="https://img.shields.io/nuget/dt/Patchright?label=Downloads">
     </a>
 </p>
 
@@ -27,10 +30,17 @@
 
 ---
 
-## Install it from NuGet
+## Installation
 
-```bash
-# Install Patchright with NuGet
+Patchright can be [found on NuGet](https://www.nuget.org/packages/Patchright) and can be installed by copying and pasting the following command into your Package Manager Console within Visual Studio (Tools > NuGet Package Manager > Package Manager Console).
+
+```sh
+Install-Package Patchright
+```
+
+Alternatively if you're using .NET Core then you can install Patchright via the command line interface with the following command:
+
+```sh
 dotnet add package Patchright
 ```
 

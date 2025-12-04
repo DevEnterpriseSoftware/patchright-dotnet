@@ -39,7 +39,6 @@ GotoAsync("data:text/html,") -> GotoAsync("https://www.google.com/blank.html")
 ### Websocket Routing (https://github.com/Kaliiiiiiiiii-Vinyzu/patchright/issues/30)
 [PlaywrightTest("page-route-web-socket.spec.ts", "should pattern match")]  
 [PlaywrightTest("page-route-web-socket.spec.ts", "should work with baseURL")]  
-[PlaywrightTest("page-route-web-socket.spec.ts", "should work with baseURL")]  
 [PlaywrightTest("page-route-web-socket.spec.ts", "should work without server")]  
 [PlaywrightTest("page-route-web-socket.spec.ts", "should work with server")]  
 [PlaywrightTest("page-route-web-socket.spec.ts", "should work with ws.close")]  
