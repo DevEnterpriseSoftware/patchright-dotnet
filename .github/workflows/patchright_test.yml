@@ -1,0 +1,57 @@
+# Patchright .NET Test Workflow
+#
+# This workflow runs tests on pull requests and pushes.
+# It uses the latest compatible Patchright driver version.
+
+name: Test Patchright .NET
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+env:
+  DOTNET_VERSION: '10.0.x'
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+
+jobs:
+  test:
+    name: Run Tests
+    runs-on: windows-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+      
+      - name: Get versions
+        id: versions
+        uses: ./.github/actions/get-versions
+      
+      - name: Run test script
+        run: |
+          $driverVersion = "${{ steps.versions.outputs.driver_version }}"
+          
+          if ($driverVersion) {
+            Write-Host "Running tests with driver version: $driverVersion" -ForegroundColor Cyan
+            .\test.ps1 -Cleanup -DriverVersion $driverVersion
+          } else {
+            Write-Host "Running tests with default driver version" -ForegroundColor Cyan
+            .\test.ps1 -Cleanup
+          }
+      
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: |
+            playwright-dotnet/src/Playwright.Tests/TestResults/
+          retention-days: 7
+          if-no-files-found: ignore
