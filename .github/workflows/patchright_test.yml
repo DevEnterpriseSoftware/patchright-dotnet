@@ -35,6 +35,7 @@ jobs:
         uses: ./.github/actions/get-versions
       
       - name: Run test script
+        shell: pwsh
         run: |
           $driverVersion = "${{ steps.versions.outputs.driver_version }}"
           
