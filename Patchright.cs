@@ -1,6 +1,21 @@
 #!/usr/bin/dotnet run
 #:package Microsoft.CodeAnalysis.CSharp@5.0.0
 
+// =================================================================================================
+// Patchright .NET Patcher
+// =================================================================================================
+//
+// This patcher applies the following categories of modifications:
+//
+// 1. METADATA PATCHES: Update NuGet package info (project files, version props, README)
+// 2. DRIVER PATCHES: Point to Patchright's modified Chromium driver instead of standard Playwright
+// 3. SCRIPT INJECTION PATCHES: Remove sourceURL comments that reveal automation
+// 4. ISOLATED CONTEXT PATCHES: Add parameter to control JavaScript context isolation
+// 5. ROUTE INJECTION PATCHES: Install routes to intercept and modify document requests
+// 6. FOCUS CONTROL PATCHES: Add browser launch options for focus behavior control
+//
+// =================================================================================================
+
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -53,6 +68,7 @@ catch (Exception ex)
 ////////////////////////////////////////////////////////////////////////
 
 // Update the project file details for the Patchright NuGet package.
+// This changes the package identity so users install "Patchright" instead of "Microsoft.Playwright".
 void PatchProjectFile()
 {
   var playwrightProjectPath = Path.Combine(playwrightPath, "src", "Playwright", "Playwright.csproj");
@@ -61,7 +77,9 @@ void PatchProjectFile()
 
   var doc = XDocument.Load(playwrightProjectPath);
 
-  // TODO: Won't need this if we XML inline document the new parameters on patched methods.
+  // Disable treating warnings as errors because our patched methods don't have XML documentation
+  // for the new parameters we add (like isolatedContext) including some minor layout changes.
+  // TODO: Consider adding proper XML documentation to patched methods to re-enable this.
   doc.Descendants("TreatWarningsAsErrors").FirstOrDefault()?.Value = "false";
 
   // Update package metadata.
@@ -72,7 +90,7 @@ void PatchProjectFile()
   doc.Descendants("Authors").FirstOrDefault()?.Value = "Microsoft Corporation, patched by Werner van Deventer";
   doc.Descendants("RepositoryUrl").FirstOrDefault()?.Value = "https://github.com/DevEnterpriseSoftware/patchright-dotnet.git";
 
-    // Use specific writer settings to avoid BOM and control new lines for better diffs.
+  // Use specific writer settings to avoid BOM and control new lines for better diffs.
   using var writer = XmlWriter.Create(playwrightProjectPath, new XmlWriterSettings
   {
     Encoding = new UTF8Encoding(false),
@@ -102,7 +120,7 @@ void PatchTargetsFile()
 void PatchVersionPropsFile()
 {
   var playwrightVersionPropsPath = Path.Combine(playwrightPath, "src", "Common", "Version.props");
-  
+
   Console.WriteLine($"Patching Version Props file: {playwrightVersionPropsPath}");
 
   var doc = XDocument.Load(playwrightVersionPropsPath);
@@ -134,9 +152,9 @@ void ReplaceReadmeFile()
   Console.WriteLine($"Replacing README file: {playwrightReadmeFilePath}");
 
   File.Copy("README.md", playwrightReadmeFilePath, overwrite: true);
-  
+
   var readmeContent = File.ReadAllText(playwrightReadmeFilePath);
-  
+
   // Extract H1 content and convert to markdown.
   var h1Match = Regex.Match(readmeContent, @"<h1[^>]*>(.*?)</h1>", RegexOptions.Singleline);
   if (h1Match.Success)
@@ -144,10 +162,10 @@ void ReplaceReadmeFile()
     var h1Content = h1Match.Groups[1].Value.Trim();
     readmeContent = Regex.Replace(readmeContent, @"<h1[^>]*>.*?</h1>", $"# {h1Content}", RegexOptions.Singleline);
   }
-  
+
   // Remove P tags and their contents (badges, etc.)
   readmeContent = Regex.Replace(readmeContent, @"<p[^>]*>.*?</p>", "", RegexOptions.Singleline);
-  
+
   File.WriteAllText(playwrightReadmeFilePath, readmeContent);
 }
 
@@ -162,7 +180,7 @@ void DisablePackageValidation()
     {
       Console.WriteLine($"Disabling EnablePackageValidation in project file: {projectFile}");
       element.Value = "false";
-      
+
       // Use specific writer settings to avoid BOM and control new lines for better diffs.
       using var writer = XmlWriter.Create(projectFile, new XmlWriterSettings
       {

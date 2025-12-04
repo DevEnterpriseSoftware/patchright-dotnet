@@ -1,0 +1,397 @@
+# Patchright .NET Build and Publish Workflow
+# 
+# This workflow:
+# 1. Checks if a new Playwright .NET version is available
+# 2. Checks for the latest compatible Patchright driver version
+# 3. Builds the Patchright .NET package
+# 4. Creates a GitHub release with the NuGet package
+# 5. Publishes to NuGet.org
+
+name: Build and Publish Patchright .NET
+
+on:
+  # Run daily at 8:00 AM UTC
+  schedule:
+    - cron: '0 8 * * *'
+  
+  # Allow manual trigger with optional force build
+  workflow_dispatch:
+    inputs:
+      force_build:
+        description: 'Force build even if versions match'
+        required: false
+        default: false
+        type: boolean
+      skip_nuget_publish:
+        description: 'Skip publishing to NuGet.org'
+        required: false
+        default: false
+        type: boolean
+
+# Ensure only one workflow runs at a time
+concurrency:
+  group: build-and-publish
+  cancel-in-progress: false
+
+env:
+  DOTNET_VERSION: '10.0.x'
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+
+jobs:
+  # Job 1: Check versions and determine if build is needed
+  check-versions:
+    name: Check Versions
+    runs-on: ubuntu-latest
+    outputs:
+      should_build: ${{ steps.compare.outputs.should_build }}
+      playwright_version: ${{ steps.playwright.outputs.version }}
+      playwright_major_minor: ${{ steps.playwright.outputs.major_minor }}
+      patchright_version: ${{ steps.patchright.outputs.version }}
+      driver_version: ${{ steps.driver.outputs.version }}
+      driver_needs_update: ${{ steps.driver.outputs.needs_update }}
+    
+    steps:
+      - name: Get latest Playwright .NET version
+        id: playwright
+        run: |
+          echo "Fetching latest Playwright .NET release..."
+          RESPONSE=$(curl -s https://api.github.com/repos/microsoft/playwright-dotnet/releases/latest)
+          TAG=$(echo "$RESPONSE" | jq -r '.tag_name')
+          VERSION="${TAG#v}"  # Remove 'v' prefix
+          MAJOR_MINOR=$(echo "$VERSION" | cut -d. -f1,2)
+          
+          echo "Latest Playwright .NET: $VERSION (major.minor: $MAJOR_MINOR)"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "major_minor=$MAJOR_MINOR" >> $GITHUB_OUTPUT
+      
+      - name: Get latest Patchright .NET version
+        id: patchright
+        run: |
+          echo "Fetching latest Patchright .NET release..."
+          RESPONSE=$(curl -s https://api.github.com/repos/DevEnterpriseSoftware/patchright-dotnet/releases/latest)
+          
+          # Handle case where no releases exist yet
+          if echo "$RESPONSE" | jq -e '.message == "Not Found"' > /dev/null 2>&1; then
+            echo "No releases found for Patchright .NET"
+            VERSION="0.0.0"
+          else
+            TAG=$(echo "$RESPONSE" | jq -r '.tag_name // "v0.0.0"')
+            VERSION="${TAG#v}"  # Remove 'v' prefix
+          fi
+          
+          echo "Latest Patchright .NET: $VERSION"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+      
+      - name: Get latest compatible Patchright driver version
+        id: driver
+        run: |
+          echo "Fetching all Patchright driver releases..."
+          PLAYWRIGHT_MAJOR_MINOR="${{ steps.playwright.outputs.major_minor }}"
+          echo "Looking for driver versions matching major.minor: $PLAYWRIGHT_MAJOR_MINOR"
+          
+          # Fetch all releases (up to 10)
+          RESPONSE=$(curl -s "https://api.github.com/repos/Kaliiiiiiiiii-Vinyzu/patchright/releases?per_page=10")
+          
+          # Extract all version tags, remove 'v' prefix, filter by major.minor, sort by version, get highest
+          MATCHING_VERSION=$(echo "$RESPONSE" | jq -r '.[].tag_name' | \
+            sed 's/^v//' | \
+            grep "^${PLAYWRIGHT_MAJOR_MINOR}\." | \
+            sort -V | \
+            tail -1)
+          
+          if [ -n "$MATCHING_VERSION" ] && [ "$MATCHING_VERSION" != "" ]; then
+            echo "Found compatible driver version: $MATCHING_VERSION"
+            echo "version=$MATCHING_VERSION" >> $GITHUB_OUTPUT
+            echo "needs_update=true" >> $GITHUB_OUTPUT
+            
+            # Show all matching versions for debugging
+            echo ""
+            echo "All matching versions for $PLAYWRIGHT_MAJOR_MINOR:"
+            echo "$RESPONSE" | jq -r '.[].tag_name' | sed 's/^v//' | grep "^${PLAYWRIGHT_MAJOR_MINOR}\." | sort -V
+          else
+            echo "No driver version found matching major.minor $PLAYWRIGHT_MAJOR_MINOR"
+            echo "Available driver versions:"
+            echo "$RESPONSE" | jq -r '.[].tag_name' | head -10
+            echo "Will use default driver version from Playwright"
+            echo "version=" >> $GITHUB_OUTPUT
+            echo "needs_update=false" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Compare versions
+        id: compare
+        run: |
+          PLAYWRIGHT="${{ steps.playwright.outputs.version }}"
+          PATCHRIGHT="${{ steps.patchright.outputs.version }}"
+          DRIVER="${{ steps.driver.outputs.version }}"
+          DRIVER_AVAILABLE="${{ steps.driver.outputs.needs_update }}"
+          PLAYWRIGHT_MAJOR_MINOR="${{ steps.playwright.outputs.major_minor }}"
+          FORCE="${{ github.event.inputs.force_build }}"
+          
+          echo "Playwright .NET version  : $PLAYWRIGHT"
+          echo "Patchright .NET version  : $PATCHRIGHT"
+          echo "Patchright Driver version: $DRIVER"
+          echo "Driver available for $PLAYWRIGHT_MAJOR_MINOR: $DRIVER_AVAILABLE"
+          echo "Force build: $FORCE"
+          
+          # Function to compare semantic versions
+          version_gt() {
+            test "$(printf '%s\n' "$@" | sort -V | head -n 1)" != "$1"
+          }
+          
+          # Check if we need to build
+          NEEDS_BUILD=false
+          if [ "$FORCE" = "true" ]; then
+            echo "Force build requested"
+            NEEDS_BUILD=true
+          elif version_gt "$PLAYWRIGHT" "$PATCHRIGHT"; then
+            echo "New Playwright version available: $PLAYWRIGHT > $PATCHRIGHT"
+            NEEDS_BUILD=true
+          else
+            echo "Patchright is up to date"
+          fi
+          
+          # If we need to build, verify driver is available
+          if [ "$NEEDS_BUILD" = "true" ]; then
+            if [ "$DRIVER_AVAILABLE" != "true" ]; then
+              echo ""
+              echo "::error::Cannot build: No compatible Patchright driver found for version $PLAYWRIGHT_MAJOR_MINOR"
+              echo "::error::The Patchright driver needs to be released for version $PLAYWRIGHT_MAJOR_MINOR.x before we can build."
+              echo ""
+              echo "Waiting for driver release at: https://github.com/Kaliiiiiiiiii-Vinyzu/patchright/releases"
+              echo "should_build=false" >> $GITHUB_OUTPUT
+              echo "driver_missing=true" >> $GITHUB_OUTPUT
+              exit 1
+            else
+              echo "✓ Compatible driver found: $DRIVER"
+              echo "should_build=true" >> $GITHUB_OUTPUT
+              echo "driver_missing=false" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "should_build=false" >> $GITHUB_OUTPUT
+            echo "driver_missing=false" >> $GITHUB_OUTPUT
+          fi
+
+  # Job 2: Build the package
+  build:
+    name: Build Patchright .NET
+    needs: check-versions
+    if: needs.check-versions.outputs.should_build == 'true'
+    runs-on: windows-latest
+    outputs:
+      package_version: ${{ steps.get_version.outputs.version }}
+      package_path: ${{ steps.find_package.outputs.path }}
+      package_name: ${{ steps.find_package.outputs.name }}
+    
+    steps:
+      - name: Checkout repository
+        id: checkout
+        uses: actions/checkout@v4
+      
+      - name: Setup .NET SDK
+        id: setup_dotnet
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Update driver version if needed
+        id: update_driver_version
+        if: needs.check-versions.outputs.driver_needs_update == 'true'
+        run: |
+          $driverVersion = "${{ needs.check-versions.outputs.driver_version }}"
+          $versionPropsPath = "playwright-dotnet/src/Common/Version.props"
+          
+          Write-Host "Updating DriverVersion to $driverVersion" -ForegroundColor Cyan
+          
+          # Read the file
+          $content = Get-Content $versionPropsPath -Raw
+          
+          # Update DriverVersion
+          $content = $content -replace '<DriverVersion>[^<]+</DriverVersion>', "<DriverVersion>$driverVersion</DriverVersion>"
+          
+          # Write back
+          Set-Content $versionPropsPath $content -NoNewline
+          
+          Write-Host "Updated Version.props:" -ForegroundColor Green
+          Get-Content $versionPropsPath
+
+      - name: Run build script
+        id: build
+        run: .\build.ps1 -Cleanup
+
+      - name: Get package version
+        id: get_version
+        run: |
+          $versionPropsPath = "playwright-dotnet/src/Common/Version.props"
+          [xml]$xml = Get-Content $versionPropsPath
+          $version = $xml.Project.PropertyGroup.AssemblyVersion
+          Write-Host "Package version: $version"
+          echo "version=$version" >> $env:GITHUB_OUTPUT
+      
+      - name: Find NuGet package
+        id: find_package
+        run: |
+          $package = Get-ChildItem -Path nuget -Filter "*.nupkg" | Select-Object -First 1
+          if (-not $package) {
+            Write-Error "No NuGet package found in nuget directory"
+            exit 1
+          }
+          
+          Write-Host "Found package: $($package.Name)"
+          echo "path=$($package.FullName)" >> $env:GITHUB_OUTPUT
+          echo "name=$($package.Name)" >> $env:GITHUB_OUTPUT
+      
+      - name: Upload NuGet package artifact
+        id: upload_nuget_package
+        uses: actions/upload-artifact@v4
+        with:
+          name: nuget-package
+          path: nuget/*.nupkg
+          retention-days: 30
+      
+      - name: Upload patch file artifact
+        id: upload_patch_file
+        uses: actions/upload-artifact@v4
+        with:
+          name: patch-file
+          path: patchright.patch
+          retention-days: 30
+
+  # Job 3: Create GitHub Release
+  release:
+    name: Create GitHub Release
+    needs: [check-versions, build]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    
+    steps:
+      - name: Download NuGet package artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: nuget-package
+          path: nuget
+      
+      - name: Download patch file artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: patch-file
+          path: .
+      
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ needs.build.outputs.package_version }}
+          name: Patchright .NET v${{ needs.build.outputs.package_version }}
+          body: |
+            ## Patchright .NET v${{ needs.build.outputs.package_version }}
+            
+            This release is based on [Playwright .NET v${{ needs.check-versions.outputs.playwright_version }}](https://github.com/microsoft/playwright-dotnet/releases/tag/v${{ needs.check-versions.outputs.playwright_version }}).
+            
+            ${{ needs.check-versions.outputs.driver_needs_update == 'true' && format('Driver version: {0}', needs.check-versions.outputs.driver_version) || '' }}
+            
+            ### Installation
+            
+            ```bash
+            dotnet add package Patchright --version ${{ needs.build.outputs.package_version }}
+            ```
+            
+            Or via NuGet Package Manager:
+            ```
+            Install-Package Patchright -Version ${{ needs.build.outputs.package_version }}
+            ```
+            
+            ### What's Changed
+            - Updated to Playwright .NET v${{ needs.check-versions.outputs.playwright_version }}
+            ${{ needs.check-versions.outputs.driver_needs_update == 'true' && format('- Updated Patchright driver to v{0}', needs.check-versions.outputs.driver_version) || '' }}
+            
+            ### Files
+            - `${{ needs.build.outputs.package_name }}` - NuGet package
+            - `patchright.patch` - Patch file applied to Playwright .NET
+          files: |
+            nuget/*.nupkg
+            patchright.patch
+          draft: false
+          prerelease: false
+          generate_release_notes: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # Job 4: Publish to NuGet.org
+  publish-nuget:
+    name: Publish to NuGet.org
+    needs: [build, release]
+    if: github.event.inputs.skip_nuget_publish != 'true'
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Download NuGet package artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: nuget-package
+          path: nuget
+      
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+      
+      - name: Publish to NuGet.org
+        run: |
+          PACKAGE=$(ls nuget/*.nupkg | head -1)
+          echo "Publishing package: $PACKAGE"
+          
+          dotnet nuget push "$PACKAGE" \
+            --api-key ${{ secrets.NUGET_API_KEY }} \
+            --source https://api.nuget.org/v3/index.json \
+            --skip-duplicate
+      
+      - name: Publish complete
+        run: |
+          echo "✅ Package published to NuGet.org successfully!"
+          echo "View at: https://www.nuget.org/packages/Patchright/"
+
+  # Job 5: Notify on failure
+  notify-failure:
+    name: Notify on Failure
+    needs: [check-versions, build, release, publish-nuget]
+    if: failure()
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Create failure issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = `Build failed on ${new Date().toISOString().split('T')[0]}`;
+            const body = `
+            ## Build Failure Report
+            
+            The automated build workflow failed. Please investigate.
+            
+            **Workflow Run:** [View Details](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})
+            
+            **Triggered by:** ${context.eventName}
+            
+            Please check the workflow logs for more details.
+            `;
+            
+            // Check if a similar issue already exists
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'build-failure'
+            });
+            
+            const existingIssue = issues.data.find(i => i.title.startsWith('Build failed on'));
+            
+            if (!existingIssue) {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: title,
+                body: body,
+                labels: ['build-failure', 'automated']
+              });
+            }

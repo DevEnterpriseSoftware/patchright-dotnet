@@ -157,7 +157,7 @@ finally {
 Write-Host "`nCreating patch file..." -ForegroundColor Cyan
 Push-Location $playwrightDir
 try {
-    git diff -- . ":(exclude)README.md" > ../Patchright.patch
+    git diff -- . ":(exclude)README.md" > ../patchright.patch
     if ($LASTEXITCODE -ne 0) {
         Write-Error "Failed to create patch file"
         exit 1
