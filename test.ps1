@@ -63,10 +63,11 @@ Write-Host "===========================`n" -ForegroundColor Yellow
 # Step 1: Run build script with cleanup
 Write-Host "Step 1: Running build script with cleanup..." -ForegroundColor Cyan
 if ($Cleanup) {
-    $buildArgs = @("-Cleanup")
+    $buildArgs = @{
+        Cleanup = $true
+    }
     if ($DriverVersion) {
-        $buildArgs += "-DriverVersion"
-        $buildArgs += $DriverVersion
+        $buildArgs.DriverVersion = $DriverVersion
         Write-Host "Using driver version: $DriverVersion" -ForegroundColor Cyan
     }
     & .\build.ps1 @buildArgs
