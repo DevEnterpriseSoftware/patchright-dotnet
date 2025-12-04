@@ -28,7 +28,9 @@ Console.WriteLine();
 Console.WriteLine($"--- Patching Playwright .NET to create Patchright ---");
 Console.WriteLine();
 
-var playwrightPath = args.Length > 0 ? args[0] : "playwright-dotnet";
+const string playwrightPath = "playwright-dotnet";
+var driverVersion = args.Length > 0 ? args[0] : null;
+
 if (!Directory.Exists(playwrightPath))
 {
   Console.WriteLine($"Path to Playwright source '{playwrightPath}' not found, provide the path or run `git clone https://github.com/microsoft/playwright-dotnet.git` in this directory first.");
@@ -132,6 +134,11 @@ void PatchVersionPropsFile()
   doc.Descendants("PackageProjectUrl").FirstOrDefault()?.Value = "https://github.com/DevEnterpriseSoftware/patchright-dotnet";
   doc.Descendants("RepositoryUrl").FirstOrDefault()?.Value = "https://github.com/DevEnterpriseSoftware/patchright-dotnet.git";
   doc.Descendants("PackageLicenseExpression").FirstOrDefault()?.Value = "Apache-2.0";
+
+  if (!string.IsNullOrWhiteSpace(driverVersion))
+  {
+    doc.Descendants("DriverVersion").FirstOrDefault()?.Value = driverVersion;
+  }
 
   // Use specific writer settings to avoid BOM and control new lines for better diffs.
   using var writer = XmlWriter.Create(playwrightVersionPropsPath, new XmlWriterSettings

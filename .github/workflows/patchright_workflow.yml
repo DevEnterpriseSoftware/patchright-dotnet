@@ -193,31 +193,9 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
-
-      - name: Update driver version if needed
-        id: update_driver_version
-        if: needs.check-versions.outputs.driver_needs_update == 'true'
-        run: |
-          $driverVersion = "${{ needs.check-versions.outputs.driver_version }}"
-          $versionPropsPath = "playwright-dotnet/src/Common/Version.props"
-          
-          Write-Host "Updating DriverVersion to $driverVersion" -ForegroundColor Cyan
-          
-          # Read the file
-          $content = Get-Content $versionPropsPath -Raw
-          
-          # Update DriverVersion
-          $content = $content -replace '<DriverVersion>[^<]+</DriverVersion>', "<DriverVersion>$driverVersion</DriverVersion>"
-          
-          # Write back
-          Set-Content $versionPropsPath $content -NoNewline
-          
-          Write-Host "Updated Version.props:" -ForegroundColor Green
-          Get-Content $versionPropsPath
-
       - name: Run build script
         id: build
-        run: .\build.ps1 -Cleanup
+        run: .\build.ps1 -Cleanup -DriverVersion ${{ needs.check-versions.outputs.driver_version }}
 
       - name: Get package version
         id: get_version

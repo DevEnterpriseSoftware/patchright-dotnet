@@ -12,7 +12,8 @@
 #>
 
 param(
-    [switch]$Cleanup
+    [switch]$Cleanup,
+    [string]$DriverVersion
 )
 
 $ErrorActionPreference = "Stop"
@@ -116,7 +117,12 @@ finally {
 
 # Run Patchright
 Write-Host "`nRunning Patchright..." -ForegroundColor Cyan
-dotnet run .\Patchright.cs
+if ($DriverVersion) {
+    dotnet run .\Patchright.cs $DriverVersion
+}
+else {
+    dotnet run .\Patchright.cs
+}
 if ($LASTEXITCODE -ne 0) {
     Write-Error "Failed to run Patchright"
     exit 1
