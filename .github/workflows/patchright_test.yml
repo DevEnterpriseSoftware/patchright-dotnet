@@ -19,7 +19,7 @@ env:
 jobs:
   test:
     name: Run Tests
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     
     steps:
       - name: Checkout repository

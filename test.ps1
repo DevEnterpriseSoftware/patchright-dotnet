@@ -109,16 +109,16 @@ foreach ($file in $csFiles) {
 
 Write-Host "✓ Applied $totalReplacements replacements across $($csFiles.Count) files" -ForegroundColor Green
 
-# Step 3: Install Chrome browser with dependencies
-Write-Host "`nStep 3: Installing Chrome browser with dependencies..." -ForegroundColor Cyan
+# Step 3: Install Playwright browsers
+Write-Host "`nStep 3: Installing Playwright browsers..." -ForegroundColor Cyan
 Push-Location ".\playwright-dotnet"
 try {
-    & .\src\Playwright\bin\Release\netstandard2.0\playwright.ps1 install --with-deps chrome
+    & .\src\Playwright\bin\Release\netstandard2.0\playwright.ps1 install
     if ($LASTEXITCODE -ne 0) {
-        Write-Error "Failed to install Chrome"
+        Write-Error "Failed to install Playwright browsers"
         exit 1
     }
-    Write-Host "✓ Chrome installed" -ForegroundColor Green
+    Write-Host "✓ Playwright browsers installed" -ForegroundColor Green
 }
 finally {
     Pop-Location
