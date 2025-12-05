@@ -30,6 +30,7 @@ Console.WriteLine();
 
 const string playwrightPath = "playwright-dotnet";
 var driverVersion = args.Length > 0 ? args[0] : null;
+var packageVersion = args.Length > 1 ? args[1] : null;
 
 if (!Directory.Exists(playwrightPath))
 {
@@ -92,6 +93,11 @@ void PatchProjectFile()
   doc.Descendants("Authors").FirstOrDefault()?.Value = "Microsoft Corporation, patched by Werner van Deventer";
   doc.Descendants("RepositoryUrl").FirstOrDefault()?.Value = "https://github.com/DevEnterpriseSoftware/patchright-dotnet.git";
 
+  if (!string.IsNullOrWhiteSpace(packageVersion))
+  {
+    doc.Descendants("ReleaseVersion").FirstOrDefault()?.Value = packageVersion;
+  }
+
   // Use specific writer settings to avoid BOM and control new lines for better diffs.
   using var writer = XmlWriter.Create(playwrightProjectPath, new XmlWriterSettings
   {
@@ -138,6 +144,11 @@ void PatchVersionPropsFile()
   if (!string.IsNullOrWhiteSpace(driverVersion))
   {
     doc.Descendants("DriverVersion").FirstOrDefault()?.Value = driverVersion;
+  }
+
+  if (!string.IsNullOrWhiteSpace(packageVersion))
+  {
+    doc.Descendants("AssemblyVersion").FirstOrDefault()?.Value = packageVersion;
   }
 
   // Use specific writer settings to avoid BOM and control new lines for better diffs.

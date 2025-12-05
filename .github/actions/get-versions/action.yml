@@ -17,6 +17,12 @@ outputs:
   driver_available:
     description: 'Whether a compatible driver was found (true/false)'
     value: ${{ steps.driver.outputs.available }}
+  nuget_version:
+    description: 'Latest Patchright .NET version published on NuGet.org'
+    value: ${{ steps.nuget.outputs.version }}
+  nuget_versions:
+    description: 'All Patchright .NET versions published on NuGet.org (JSON array)'
+    value: ${{ steps.nuget.outputs.versions }}
 
 runs:
   using: 'composite'
@@ -87,4 +93,30 @@ runs:
           echo "$RESPONSE" | jq -r '.[].tag_name' | head -10
           echo "version=" >> $GITHUB_OUTPUT
           echo "available=false" >> $GITHUB_OUTPUT
+        fi
+    
+    - name: Get NuGet.org published versions
+      id: nuget
+      shell: bash
+      run: |
+        echo "Fetching Patchright .NET versions from NuGet.org..."
+        
+        # Query NuGet API for all published versions
+        RESPONSE=$(curl -s "https://api.nuget.org/v3-flatcontainer/patchright/index.json" || echo '{"versions":[]}')
+        
+        # Check if we got a valid response
+        if echo "$RESPONSE" | jq -e '.versions' > /dev/null 2>&1; then
+          # Get all versions as JSON array
+          VERSIONS=$(echo "$RESPONSE" | jq -c '.versions')
+          
+          # Get the latest version (last in the sorted array)
+          LATEST=$(echo "$RESPONSE" | jq -r '.versions[-1] // ""')
+          
+          echo "Latest NuGet version: $LATEST"
+          echo "version=$LATEST" >> $GITHUB_OUTPUT
+          echo "versions=$VERSIONS" >> $GITHUB_OUTPUT
+        else
+          echo "No Patchright .NET versions found on NuGet.org"
+          echo "version=" >> $GITHUB_OUTPUT
+          echo "versions=[]" >> $GITHUB_OUTPUT
         fi

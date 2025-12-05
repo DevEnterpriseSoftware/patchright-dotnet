@@ -6,14 +6,20 @@
     This script clones playwright-dotnet, patches it with Patchright, and builds the project.
 .PARAMETER Cleanup
     Remove existing playwright-dotnet directory before starting
+.PARAMETER DriverVersion
+    Specific driver version to use
+.PARAMETER PackageVersion
+    Target package version to build (overrides Version.props)
 .EXAMPLE
     .\build.ps1
     .\build.ps1 -Cleanup
+    .\build.ps1 -Cleanup -DriverVersion 1.57.0 -PackageVersion 1.57.0
 #>
 
 param(
     [switch]$Cleanup,
-    [string]$DriverVersion
+    [string]$DriverVersion,
+    [string]$PackageVersion
 )
 
 $ErrorActionPreference = "Stop"
@@ -117,8 +123,8 @@ finally {
 
 # Run Patchright
 Write-Host "`nRunning Patchright..." -ForegroundColor Cyan
-if ($DriverVersion) {
-    dotnet run .\Patchright.cs $DriverVersion
+if ($DriverVersion && $PackageVersion) {
+    dotnet run .\Patchright.cs $DriverVersion $PackageVersion
 }
 else {
     dotnet run .\Patchright.cs
