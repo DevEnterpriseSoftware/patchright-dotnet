@@ -41,10 +41,10 @@ jobs:
           
           if ($driverVersion) {
             Write-Host "Running tests with driver version: $driverVersion" -ForegroundColor Cyan
-            .\test.ps1 -Cleanup -DriverVersion $driverVersion
+            .\test.ps1 -DriverVersion $driverVersion
           } else {
             Write-Host "Running tests with default driver version" -ForegroundColor Cyan
-            .\test.ps1 -Cleanup
+            .\test.ps1
           }
       
       - name: Upload test results

@@ -10,16 +10,20 @@
     Specific driver version to use
 .PARAMETER PackageVersion
     Target package version to build (overrides Version.props)
+.PARAMETER IsolatedContextDefault
+    The default isolated context behavior to use when running the patch.
 .EXAMPLE
     .\build.ps1
     .\build.ps1 -Cleanup
     .\build.ps1 -Cleanup -DriverVersion 1.57.0 -PackageVersion 1.57.0
+    .\build.ps1 -Cleanup -DriverVersion 1.57.0 -PackageVersion 1.57.0 -IsolatedContextDefault $false
 #>
 
 param(
     [switch]$Cleanup,
     [string]$DriverVersion,
-    [string]$PackageVersion
+    [string]$PackageVersion,
+    [bool]$IsolatedContextDefault = $true  # Default to true, can be overridden for unit tests
 )
 
 $ErrorActionPreference = "Stop"
@@ -123,12 +127,8 @@ finally {
 
 # Run Patchright
 Write-Host "`nRunning Patchright..." -ForegroundColor Cyan
-if ($DriverVersion && $PackageVersion) {
-    dotnet run .\Patchright.cs $DriverVersion $PackageVersion
-}
-else {
-    dotnet run .\Patchright.cs
-}
+dotnet run .\Patchright.cs $IsolatedContextDefault $DriverVersion $PackageVersion
+
 if ($LASTEXITCODE -ne 0) {
     Write-Error "Failed to run Patchright"
     exit 1

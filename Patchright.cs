@@ -29,8 +29,9 @@ Console.WriteLine($"--- Patching Playwright .NET to create Patchright ---");
 Console.WriteLine();
 
 const string playwrightPath = "playwright-dotnet";
-var driverVersion = args.Length > 0 ? args[0] : null;
-var packageVersion = args.Length > 1 ? args[1] : null;
+var isolatedContextDefaultValue = args.Length > 0 ? bool.Parse(args[0]) : true;
+var driverVersion = args.Length > 1 ? args[1] : null;
+var packageVersion = args.Length > 2 ? args[2] : null;
 
 if (!Directory.Exists(playwrightPath))
 {
@@ -270,14 +271,14 @@ void PatchWorker()
 
   Console.WriteLine($"Patching Worker file: {workerPath}");
 
-  File.WriteAllText(workerPath, AddIsolatedContextToMethods(workerCode, "Worker", methodNamesToPatch));
+  File.WriteAllText(workerPath, AddIsolatedContextToMethods(workerCode, "Worker", isolatedContextDefaultValue, methodNamesToPatch));
 
   var workerGeneratedInterfacePath = Path.Combine(playwrightPath, "src", "Playwright", "API", "Generated", "IWorker.cs");
   var workerGeneratedInterfaceCode = File.ReadAllText(workerGeneratedInterfacePath);
 
   Console.WriteLine($"Patching generated IWorker file: {workerGeneratedInterfacePath}");
 
-  File.WriteAllText(workerGeneratedInterfacePath, AddIsolatedContextToMethods(workerGeneratedInterfaceCode, "IWorker", methodNamesToPatch));
+  File.WriteAllText(workerGeneratedInterfacePath, AddIsolatedContextToMethods(workerGeneratedInterfaceCode, "IWorker", isolatedContextDefaultValue, methodNamesToPatch));
 }
 
 // Add isolatedContext parameter to JSHandle methods.
@@ -290,21 +291,21 @@ void PatchJSHandle()
 
   Console.WriteLine($"Patching JSHandle file: {jsHandlePath}");
 
-  File.WriteAllText(jsHandlePath, AddIsolatedContextToMethods(jsHandleCode, "JSHandle", methodNamesToPatch));
+  File.WriteAllText(jsHandlePath, AddIsolatedContextToMethods(jsHandleCode, "JSHandle", isolatedContextDefaultValue, methodNamesToPatch));
 
   var jsHandleGeneratedInterfacePath = Path.Combine(playwrightPath, "src", "Playwright", "API", "Generated", "IJSHandle.cs");
   var jsHandleGeneratedInterfaceCode = File.ReadAllText(jsHandleGeneratedInterfacePath);
 
   Console.WriteLine($"Patching generated IJSHandle file: {jsHandleGeneratedInterfacePath}");
 
-  File.WriteAllText(jsHandleGeneratedInterfacePath, AddIsolatedContextToMethods(jsHandleGeneratedInterfaceCode, "IJSHandle", methodNamesToPatch));
+  File.WriteAllText(jsHandleGeneratedInterfacePath, AddIsolatedContextToMethods(jsHandleGeneratedInterfaceCode, "IJSHandle", isolatedContextDefaultValue, methodNamesToPatch));
 
   var jsHandleSupplementsInterfacePath = Path.Combine(playwrightPath, "src", "Playwright", "API", "Supplements", "IJSHandle.cs");
   var jsHandleSupplementsInterfaceCode = File.ReadAllText(jsHandleSupplementsInterfacePath);
 
   Console.WriteLine($"Patching supplements IJSHandle file: {jsHandleSupplementsInterfacePath}");
 
-  var newJsHandleSupplementsInterfaceCode = AddIsolatedContextToMethods(jsHandleSupplementsInterfaceCode, "IJSHandle", methodNamesToPatch);
+  var newJsHandleSupplementsInterfaceCode = AddIsolatedContextToMethods(jsHandleSupplementsInterfaceCode, "IJSHandle", isolatedContextDefaultValue, methodNamesToPatch);
   File.WriteAllText(jsHandleSupplementsInterfacePath, newJsHandleSupplementsInterfaceCode.Replace("EvaluateAsync{T}(string, object)", "EvaluateAsync{T}(string, object, bool)"));
 }
 
@@ -319,21 +320,21 @@ void PatchFrame()
 
   Console.WriteLine($"Patching Frame file: {framePath}");
 
-  File.WriteAllText(framePath, AddIsolatedContextToMethods(frameCode, "Frame", methodNamesToPatch));
+  File.WriteAllText(framePath, AddIsolatedContextToMethods(frameCode, "Frame", isolatedContextDefaultValue, methodNamesToPatch));
 
   var frameGeneratedInterfacePath = Path.Combine(playwrightPath, "src", "Playwright", "API", "Generated", "IFrame.cs");
   var frameGeneratedInterfaceCode = File.ReadAllText(frameGeneratedInterfacePath);
 
   Console.WriteLine($"Patching generated IFrame file: {frameGeneratedInterfacePath}");
 
-  File.WriteAllText(frameGeneratedInterfacePath, AddIsolatedContextToMethods(frameGeneratedInterfaceCode, "IFrame", methodNamesToPatch));
+  File.WriteAllText(frameGeneratedInterfacePath, AddIsolatedContextToMethods(frameGeneratedInterfaceCode, "IFrame", isolatedContextDefaultValue, methodNamesToPatch));
 
   var frameSupplementsInterfacePath = Path.Combine(playwrightPath, "src", "Playwright", "API", "Supplements", "IFrame.cs");
   var frameSupplementsInterfaceCode = File.ReadAllText(frameSupplementsInterfacePath);
 
   Console.WriteLine($"Patching supplements IFrame file: {frameSupplementsInterfacePath}");
 
-  File.WriteAllText(frameSupplementsInterfacePath, AddIsolatedContextToMethods(frameSupplementsInterfaceCode, "IFrame", methodNamesToPatch));
+  File.WriteAllText(frameSupplementsInterfacePath, AddIsolatedContextToMethods(frameSupplementsInterfaceCode, "IFrame", isolatedContextDefaultValue, methodNamesToPatch));
 }
 
 // Add isolatedContext parameter to Locator methods.
@@ -346,21 +347,21 @@ void PatchLocator()
 
   Console.WriteLine($"Patching Locator file: {locatorPath}");
 
-  File.WriteAllText(locatorPath, AddIsolatedContextToMethods(locatorCode, "Locator", methodNamesToPatch));
+  File.WriteAllText(locatorPath, AddIsolatedContextToMethods(locatorCode, "Locator", isolatedContextDefaultValue, methodNamesToPatch));
 
   var locatorGeneratedInterfacePath = Path.Combine(playwrightPath, "src", "Playwright", "API", "Generated", "ILocator.cs");
   var locatorGeneratedInterfaceCode = File.ReadAllText(locatorGeneratedInterfacePath);
 
   Console.WriteLine($"Patching generated ILocator file: {locatorGeneratedInterfacePath}");
 
-  File.WriteAllText(locatorGeneratedInterfacePath, AddIsolatedContextToMethods(locatorGeneratedInterfaceCode, "ILocator", methodNamesToPatch));
+  File.WriteAllText(locatorGeneratedInterfacePath, AddIsolatedContextToMethods(locatorGeneratedInterfaceCode, "ILocator", isolatedContextDefaultValue, methodNamesToPatch));
 
   var locatorSupplementsInterfacePath = Path.Combine(playwrightPath, "src", "Playwright", "API", "Supplements", "ILocator.cs");
   var locatorSupplementsInterfaceCode = File.ReadAllText(locatorSupplementsInterfacePath);
 
   Console.WriteLine($"Patching supplements ILocator file: {locatorSupplementsInterfacePath}");
 
-  File.WriteAllText(locatorSupplementsInterfacePath, AddIsolatedContextToMethods(locatorSupplementsInterfaceCode, "ILocator", methodNamesToPatch));
+  File.WriteAllText(locatorSupplementsInterfacePath, AddIsolatedContextToMethods(locatorSupplementsInterfaceCode, "ILocator", isolatedContextDefaultValue, methodNamesToPatch));
 }
 
 // Add isolatedContext parameter to Page methods.
@@ -373,7 +374,7 @@ void PatchPage()
 
   Console.WriteLine($"Patching Page file: {pagePath}");
 
-  File.WriteAllText(pagePath, AddIsolatedContextToMethods(pageCode, "Page", methodNamesToPatch));
+  File.WriteAllText(pagePath, AddIsolatedContextToMethods(pageCode, "Page", isolatedContextDefaultValue, methodNamesToPatch));
 
   // Read the code again after the isolated context changes have been applied.
   pageCode = File.ReadAllText(pagePath);
@@ -456,14 +457,14 @@ void PatchPage()
 
   Console.WriteLine($"Patching generated IPage file: {pageGeneratedInterfacePath}");
 
-  File.WriteAllText(pageGeneratedInterfacePath, AddIsolatedContextToMethods(pageGeneratedInterfaceCode, "IPage", methodNamesToPatch));
+  File.WriteAllText(pageGeneratedInterfacePath, AddIsolatedContextToMethods(pageGeneratedInterfaceCode, "IPage", isolatedContextDefaultValue, methodNamesToPatch));
 
   var pageSupplementsInterfacePath = Path.Combine(playwrightPath, "src", "Playwright", "API", "Supplements", "IPage.cs");
   var pageSupplementsInterfaceCode = File.ReadAllText(pageSupplementsInterfacePath);
 
   Console.WriteLine($"Patching supplements IPage file: {pageSupplementsInterfacePath}");
 
-  File.WriteAllText(pageSupplementsInterfacePath, AddIsolatedContextToMethods(pageSupplementsInterfaceCode, "IPage", methodNamesToPatch));
+  File.WriteAllText(pageSupplementsInterfacePath, AddIsolatedContextToMethods(pageSupplementsInterfaceCode, "IPage", isolatedContextDefaultValue, methodNamesToPatch));
 }
 
 // Add route injection to BrowserContext class and call from relevant methods.
@@ -870,7 +871,7 @@ static MethodDeclarationSyntax PatchMethodWithInjectedStatement(MethodDeclaratio
 
 // Method to add isolatedContext parameter to specified methods provided.
 // This will also patch pass-through calls to private methods as needed and add the dictionary entry to SendMessageToServerAsync calls.
-static string AddIsolatedContextToMethods(string code, string typeName, IEnumerable<string> methodNames)
+static string AddIsolatedContextToMethods(string code, string typeName, bool defaultValue, IEnumerable<string> methodNames)
 {
   var tree = CSharpSyntaxTree.ParseText(code);
   var root = tree.GetRoot();
@@ -1011,7 +1012,7 @@ static string AddIsolatedContextToMethods(string code, string typeName, IEnumera
             SyntaxFactory.Token(SyntaxKind.EqualsToken)
               .WithLeadingTrivia(SyntaxFactory.Space)
               .WithTrailingTrivia(SyntaxFactory.Space),
-            SyntaxFactory.LiteralExpression(SyntaxKind.TrueLiteralExpression)));
+            defaultValue ? SyntaxFactory.LiteralExpression(SyntaxKind.TrueLiteralExpression) : SyntaxFactory.LiteralExpression(SyntaxKind.FalseLiteralExpression)));
 
       // Add leading space if there are existing parameters.
       var newParameterList = currentMethod.ParameterList.Parameters.Count > 0

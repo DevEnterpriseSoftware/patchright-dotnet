@@ -153,7 +153,7 @@ jobs:
           $driverVersion = "${{ needs.check-versions.outputs.driver_version }}"
           
           Write-Host "Building Patchright .NET v$targetVersion with driver v$driverVersion" -ForegroundColor Cyan
-          .\build.ps1 -Cleanup -DriverVersion $driverVersion -PackageVersion $targetVersion
+          .\build.ps1 -Cleanup -DriverVersion $driverVersion -PackageVersion $targetVersion -IsolatedContext $True
 
       - name: Find NuGet package
         id: find_package
