@@ -114,11 +114,21 @@ jobs:
           
           # Check if target version already exists on NuGet
           NUGET_EXISTS=false
-          if echo "$NUGET_VERSIONS" | jq -e ".[] | select(. == \"$TARGET_VERSION\")" > /dev/null 2>&1; then
-            echo "Version $TARGET_VERSION exists on NuGet.org (release is immutable)"
-            NUGET_EXISTS=true
+
+          echo "Checking if $TARGET_VERSION exists in NuGet versions..."
+          echo "NuGet versions JSON: $NUGET_VERSIONS"
+
+          # Validate JSON is not empty
+          if [ -z "$NUGET_VERSIONS" ] || [ "$NUGET_VERSIONS" = "[]" ]; then
+            echo "No versions found on NuGet.org"
           else
-            echo "Version $TARGET_VERSION not on NuGet.org"
+            # Check if version exists in the array
+            if echo "$NUGET_VERSIONS" | jq -e --arg ver "$TARGET_VERSION" '.[] | select(. == $ver)' > /dev/null 2>&1; then
+              echo "Version $TARGET_VERSION exists on NuGet.org (release is immutable)"
+              NUGET_EXISTS=true
+            else
+              echo "Version $TARGET_VERSION not on NuGet.org"
+            fi
           fi
           
           echo ""
