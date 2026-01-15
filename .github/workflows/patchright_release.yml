@@ -239,6 +239,7 @@ jobs:
             artifacts/patch-file/patchright.patch
           draft: false
           prerelease: ${{ github.event.inputs.nuget_publish != 'true' }}
+          make_latest: ${{ github.event.inputs.nuget_publish == 'true' }}
           generate_release_notes: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

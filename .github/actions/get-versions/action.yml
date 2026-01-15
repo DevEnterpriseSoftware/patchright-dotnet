@@ -32,33 +32,101 @@ runs:
       shell: bash
       run: |
         echo "Fetching latest Playwright .NET release..."
-        RESPONSE=$(curl -s https://api.github.com/repos/microsoft/playwright-dotnet/releases/latest)
-        TAG=$(echo "$RESPONSE" | jq -r '.tag_name')
-        VERSION="${TAG#v}"  # Remove 'v' prefix
-        MAJOR_MINOR=$(echo "$VERSION" | cut -d. -f1,2)
         
-        echo "Latest Playwright .NET: $VERSION (major.minor: $MAJOR_MINOR)"
-        echo "version=$VERSION" >> $GITHUB_OUTPUT
-        echo "major_minor=$MAJOR_MINOR" >> $GITHUB_OUTPUT
+        # Retry logic with exponential backoff
+        MAX_RETRIES=3
+        RETRY_COUNT=0
+        SUCCESS=false
+        
+        while [ $RETRY_COUNT -lt $MAX_RETRIES ] && [ "$SUCCESS" = false ]; do
+          if [ $RETRY_COUNT -gt 0 ]; then
+            WAIT_TIME=$((2 ** RETRY_COUNT))
+            echo "Retry $RETRY_COUNT/$MAX_RETRIES after ${WAIT_TIME}s..."
+            sleep $WAIT_TIME
+          fi
+          
+          RESPONSE=$(curl -s -w "\n%{http_code}" https://api.github.com/repos/microsoft/playwright-dotnet/releases/latest)
+          HTTP_CODE=$(echo "$RESPONSE" | tail -1)
+          BODY=$(echo "$RESPONSE" | sed '$d')
+          
+          echo "HTTP Status: $HTTP_CODE"
+          
+          if [ "$HTTP_CODE" = "200" ]; then
+            # Validate JSON and check for tag_name
+            if echo "$BODY" | jq -e '.tag_name' > /dev/null 2>&1; then
+              TAG=$(echo "$BODY" | jq -r '.tag_name')
+              VERSION="${TAG#v}"
+              MAJOR_MINOR=$(echo "$VERSION" | cut -d. -f1,2)
+              
+              echo "Latest Playwright .NET: $VERSION (major.minor: $MAJOR_MINOR)"
+              echo "version=$VERSION" >> $GITHUB_OUTPUT
+              echo "major_minor=$MAJOR_MINOR" >> $GITHUB_OUTPUT
+              SUCCESS=true
+            else
+              echo "ERROR: Invalid JSON response or missing tag_name"
+              echo "Response body (first 500 chars):"
+              echo "$BODY" | head -c 500
+              RETRY_COUNT=$((RETRY_COUNT + 1))
+            fi
+          else
+            echo "ERROR: GitHub API returned status $HTTP_CODE"
+            echo "Response body (first 500 chars):"
+            echo "$BODY" | head -c 500
+            RETRY_COUNT=$((RETRY_COUNT + 1))
+          fi
+        done
+        
+        if [ "$SUCCESS" = false ]; then
+          echo "FATAL: Failed to fetch Playwright version after $MAX_RETRIES retries"
+          exit 1
+        fi
     
     - name: Get latest Patchright .NET version
       id: patchright
       shell: bash
       run: |
         echo "Fetching latest Patchright .NET release..."
-        RESPONSE=$(curl -s https://api.github.com/repos/DevEnterpriseSoftware/patchright-dotnet/releases/latest)
         
-        # Handle case where no releases exist yet
-        if echo "$RESPONSE" | jq -e '.message == "Not Found"' > /dev/null 2>&1; then
-          echo "No releases found for Patchright .NET"
-          VERSION="0.0.0"
-        else
-          TAG=$(echo "$RESPONSE" | jq -r '.tag_name // "v0.0.0"')
-          VERSION="${TAG#v}"  # Remove 'v' prefix
+        MAX_RETRIES=3
+        RETRY_COUNT=0
+        SUCCESS=false
+        
+        while [ $RETRY_COUNT -lt $MAX_RETRIES ] && [ "$SUCCESS" = false ]; do
+          if [ $RETRY_COUNT -gt 0 ]; then
+            WAIT_TIME=$((2 ** RETRY_COUNT))
+            echo "Retry $RETRY_COUNT/$MAX_RETRIES after ${WAIT_TIME}s..."
+            sleep $WAIT_TIME
+          fi
+          
+          RESPONSE=$(curl -s -w "\n%{http_code}" https://api.github.com/repos/DevEnterpriseSoftware/patchright-dotnet/releases/latest)
+          HTTP_CODE=$(echo "$RESPONSE" | tail -1)
+          BODY=$(echo "$RESPONSE" | sed '$d')
+          
+          echo "HTTP Status: $HTTP_CODE"
+          
+          if [ "$HTTP_CODE" = "200" ]; then
+            TAG=$(echo "$BODY" | jq -r '.tag_name // "v0.0.0"')
+            VERSION="${TAG#v}"
+            echo "Latest Patchright .NET: $VERSION"
+            echo "version=$VERSION" >> $GITHUB_OUTPUT
+            SUCCESS=true
+          elif [ "$HTTP_CODE" = "404" ]; then
+            echo "No releases found for Patchright .NET (404)"
+            VERSION="0.0.0"
+            echo "version=$VERSION" >> $GITHUB_OUTPUT
+            SUCCESS=true
+          else
+            echo "ERROR: GitHub API returned status $HTTP_CODE"
+            echo "Response body (first 500 chars):"
+            echo "$BODY" | head -c 500
+            RETRY_COUNT=$((RETRY_COUNT + 1))
+          fi
+        done
+        
+        if [ "$SUCCESS" = false ]; then
+          echo "FATAL: Failed to fetch Patchright version after $MAX_RETRIES retries"
+          exit 1
         fi
-        
-        echo "Latest Patchright .NET: $VERSION"
-        echo "version=$VERSION" >> $GITHUB_OUTPUT
     
     - name: Get latest compatible Patchright driver version
       id: driver
@@ -68,31 +136,73 @@ runs:
         PLAYWRIGHT_MAJOR_MINOR="${{ steps.playwright.outputs.major_minor }}"
         echo "Looking for driver versions matching major.minor: $PLAYWRIGHT_MAJOR_MINOR"
         
-        # Fetch releases (up to 10)
-        RESPONSE=$(curl -s "https://api.github.com/repos/Kaliiiiiiiiii-Vinyzu/patchright/releases?per_page=10")
-        
-        # Extract all version tags, remove 'v' prefix, filter by major.minor, sort by version, get highest
-        MATCHING_VERSION=$(echo "$RESPONSE" | jq -r '.[].tag_name' | \
-          sed 's/^v//' | \
-          grep "^${PLAYWRIGHT_MAJOR_MINOR}\." | \
-          sort -V | \
-          tail -1)
-        
-        if [ -n "$MATCHING_VERSION" ] && [ "$MATCHING_VERSION" != "" ]; then
-          echo "Found compatible driver version: $MATCHING_VERSION"
-          echo "version=$MATCHING_VERSION" >> $GITHUB_OUTPUT
-          echo "available=true" >> $GITHUB_OUTPUT
-          
-          # Show all matching versions for debugging
-          echo ""
-          echo "All matching versions for $PLAYWRIGHT_MAJOR_MINOR:"
-          echo "$RESPONSE" | jq -r '.[].tag_name' | sed 's/^v//' | grep "^${PLAYWRIGHT_MAJOR_MINOR}\." | sort -V
-        else
-          echo "No driver version found matching major.minor $PLAYWRIGHT_MAJOR_MINOR"
-          echo "Available driver versions:"
-          echo "$RESPONSE" | jq -r '.[].tag_name' | head -10
+        # Validate we have a major.minor version
+        if [ -z "$PLAYWRIGHT_MAJOR_MINOR" ] || [ "$PLAYWRIGHT_MAJOR_MINOR" = "null" ]; then
+          echo "ERROR: No valid Playwright major.minor version available"
           echo "version=" >> $GITHUB_OUTPUT
           echo "available=false" >> $GITHUB_OUTPUT
+          exit 1
+        fi
+        
+        MAX_RETRIES=3
+        RETRY_COUNT=0
+        SUCCESS=false
+        
+        while [ $RETRY_COUNT -lt $MAX_RETRIES ] && [ "$SUCCESS" = false ]; do
+          if [ $RETRY_COUNT -gt 0 ]; then
+            WAIT_TIME=$((2 ** RETRY_COUNT))
+            echo "Retry $RETRY_COUNT/$MAX_RETRIES after ${WAIT_TIME}s..."
+            sleep $WAIT_TIME
+          fi
+          
+          RESPONSE=$(curl -s -w "\n%{http_code}" "https://api.github.com/repos/Kaliiiiiiiiii-Vinyzu/patchright/releases?per_page=10")
+          HTTP_CODE=$(echo "$RESPONSE" | tail -1)
+          BODY=$(echo "$RESPONSE" | sed '$d')
+          
+          echo "HTTP Status: $HTTP_CODE"
+          
+          if [ "$HTTP_CODE" = "200" ]; then
+            # Validate it's a JSON array
+            if echo "$BODY" | jq -e 'type == "array"' > /dev/null 2>&1; then
+              MATCHING_VERSION=$(echo "$BODY" | jq -r '.[].tag_name' | \
+                sed 's/^v//' | \
+                grep "^${PLAYWRIGHT_MAJOR_MINOR}\." | \
+                sort -V | \
+                tail -1)
+              
+              if [ -n "$MATCHING_VERSION" ] && [ "$MATCHING_VERSION" != "" ]; then
+                echo "Found compatible driver version: $MATCHING_VERSION"
+                echo "version=$MATCHING_VERSION" >> $GITHUB_OUTPUT
+                echo "available=true" >> $GITHUB_OUTPUT
+                
+                echo ""
+                echo "All matching versions for $PLAYWRIGHT_MAJOR_MINOR:"
+                echo "$BODY" | jq -r '.[].tag_name' | sed 's/^v//' | grep "^${PLAYWRIGHT_MAJOR_MINOR}\." | sort -V
+              else
+                echo "No driver version found matching major.minor $PLAYWRIGHT_MAJOR_MINOR"
+                echo "Available driver versions:"
+                echo "$BODY" | jq -r '.[].tag_name' | head -10
+                echo "version=" >> $GITHUB_OUTPUT
+                echo "available=false" >> $GITHUB_OUTPUT
+              fi
+              SUCCESS=true
+            else
+              echo "ERROR: Response is not a valid JSON array"
+              echo "Response body (first 500 chars):"
+              echo "$BODY" | head -c 500
+              RETRY_COUNT=$((RETRY_COUNT + 1))
+            fi
+          else
+            echo "ERROR: GitHub API returned status $HTTP_CODE"
+            echo "Response body (first 500 chars):"
+            echo "$BODY" | head -c 500
+            RETRY_COUNT=$((RETRY_COUNT + 1))
+          fi
+        done
+        
+        if [ "$SUCCESS" = false ]; then
+          echo "FATAL: Failed to fetch driver version after $MAX_RETRIES retries"
+          exit 1
         fi
     
     - name: Get NuGet.org published versions
@@ -101,22 +211,52 @@ runs:
       run: |
         echo "Fetching Patchright .NET versions from NuGet.org..."
         
-        # Query NuGet API for all published versions
-        RESPONSE=$(curl -s "https://api.nuget.org/v3-flatcontainer/patchright/index.json" || echo '{"versions":[]}')
+        MAX_RETRIES=3
+        RETRY_COUNT=0
+        SUCCESS=false
         
-        # Check if we got a valid response
-        if echo "$RESPONSE" | jq -e '.versions' > /dev/null 2>&1; then
-          # Get all versions as JSON array
-          VERSIONS=$(echo "$RESPONSE" | jq -c '.versions')
+        while [ $RETRY_COUNT -lt $MAX_RETRIES ] && [ "$SUCCESS" = false ]; do
+          if [ $RETRY_COUNT -gt 0 ]; then
+            WAIT_TIME=$((2 ** RETRY_COUNT))
+            echo "Retry $RETRY_COUNT/$MAX_RETRIES after ${WAIT_TIME}s..."
+            sleep $WAIT_TIME
+          fi
           
-          # Get the latest version (last in the sorted array)
-          LATEST=$(echo "$RESPONSE" | jq -r '.versions[-1] // ""')
+          RESPONSE=$(curl -s -w "\n%{http_code}" "https://api.nuget.org/v3-flatcontainer/patchright/index.json")
+          HTTP_CODE=$(echo "$RESPONSE" | tail -1)
+          BODY=$(echo "$RESPONSE" | sed '$d')
           
-          echo "Latest NuGet version: $LATEST"
-          echo "version=$LATEST" >> $GITHUB_OUTPUT
-          echo "versions=$VERSIONS" >> $GITHUB_OUTPUT
-        else
-          echo "No Patchright .NET versions found on NuGet.org"
-          echo "version=" >> $GITHUB_OUTPUT
-          echo "versions=[]" >> $GITHUB_OUTPUT
+          echo "HTTP Status: $HTTP_CODE"
+          
+          if [ "$HTTP_CODE" = "200" ]; then
+            if echo "$BODY" | jq -e '.versions' > /dev/null 2>&1; then
+              VERSIONS=$(echo "$BODY" | jq -c '.versions')
+              LATEST=$(echo "$BODY" | jq -r '.versions[-1] // ""')
+              
+              echo "Latest NuGet version: $LATEST"
+              echo "version=$LATEST" >> $GITHUB_OUTPUT
+              echo "versions=$VERSIONS" >> $GITHUB_OUTPUT
+              SUCCESS=true
+            else
+              echo "ERROR: Invalid JSON or missing versions field"
+              echo "Response body (first 500 chars):"
+              echo "$BODY" | head -c 500
+              RETRY_COUNT=$((RETRY_COUNT + 1))
+            fi
+          elif [ "$HTTP_CODE" = "404" ]; then
+            echo "No Patchright .NET versions found on NuGet.org (404)"
+            echo "version=" >> $GITHUB_OUTPUT
+            echo "versions=[]" >> $GITHUB_OUTPUT
+            SUCCESS=true
+          else
+            echo "ERROR: NuGet API returned status $HTTP_CODE"
+            echo "Response body (first 500 chars):"
+            echo "$BODY" | head -c 500
+            RETRY_COUNT=$((RETRY_COUNT + 1))
+          fi
+        done
+        
+        if [ "$SUCCESS" = false ]; then
+          echo "FATAL: Failed to fetch NuGet versions after $MAX_RETRIES retries"
+          exit 1
         fi
