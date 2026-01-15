@@ -65,14 +65,14 @@ jobs:
       - name: Determine target version
         id: decide
         run: |
-          PLAYWRIGHT="${{ steps.versions.outputs.playwright_version }}"
-          PATCHRIGHT="${{ steps.versions.outputs.patchright_version }}"
-          NUGET_VERSION="${{ steps.versions.outputs.nuget_version }}"
-          NUGET_VERSIONS="${{ steps.versions.outputs.nuget_versions }}"
-          DRIVER="${{ steps.versions.outputs.driver_version }}"
-          DRIVER_AVAILABLE="${{ steps.versions.outputs.driver_available }}"
-          PLAYWRIGHT_MAJOR_MINOR="${{ steps.versions.outputs.playwright_major_minor }}"
-          IS_DRIVER_UPDATE="${{ github.event.inputs.driver_update_release }}"
+          PLAYWRIGHT='${{ steps.versions.outputs.playwright_version }}'
+          PATCHRIGHT='${{ steps.versions.outputs.patchright_version }}'
+          NUGET_VERSION='${{ steps.versions.outputs.nuget_version }}'
+          NUGET_VERSIONS='${{ steps.versions.outputs.nuget_versions }}'
+          DRIVER='${{ steps.versions.outputs.driver_version }}'
+          DRIVER_AVAILABLE='${{ steps.versions.outputs.driver_available }}'
+          PLAYWRIGHT_MAJOR_MINOR='${{ steps.versions.outputs.playwright_major_minor }}'
+          IS_DRIVER_UPDATE='${{ github.event.inputs.driver_update_release }}'
           
           echo "=== Version Info ==="
           echo "Playwright .NET   : $PLAYWRIGHT"
@@ -123,7 +123,7 @@ jobs:
             echo "No versions found on NuGet.org"
           else
             # Check if version exists in the array
-            if echo "$NUGET_VERSIONS" | jq -e --arg ver "$TARGET_VERSION" '.[] | select(. == $ver)' > /dev/null 2>&1; then
+            if echo "$NUGET_VERSIONS" | jq -e --arg ver "$TARGET_VERSION" 'any(. == $ver)' > /dev/null 2>&1; then
               echo "Version $TARGET_VERSION exists on NuGet.org (release is immutable)"
               NUGET_EXISTS=true
             else

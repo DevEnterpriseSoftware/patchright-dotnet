@@ -230,7 +230,8 @@ runs:
           
           if [ "$HTTP_CODE" = "200" ]; then
             if echo "$BODY" | jq -e '.versions' > /dev/null 2>&1; then
-              VERSIONS=$(echo "$BODY" | jq -c '.versions')
+              # Ensure all versions are strings in the JSON array to easily compare later
+              VERSIONS=$(echo "$BODY" | jq -c '[.versions[] | tostring]')
               LATEST=$(echo "$BODY" | jq -r '.versions[-1] // ""')
               
               echo "Latest NuGet version: $LATEST"
