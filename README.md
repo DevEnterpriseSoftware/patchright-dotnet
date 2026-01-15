@@ -79,7 +79,7 @@ await using var context = await playwright.Chromium.LaunchPersistentContextAsync
     {
         Channel = "chrome",
         Headless = false,
-        NoViewport = true,
+        ViewportSize = ViewportSize.NoViewport,
         // do NOT add custom browser headers or userAgent
     });
 ```
