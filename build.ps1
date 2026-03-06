@@ -53,8 +53,8 @@ function Test-Prerequisites {
         exit 1
     }
     
-    Write-Host "✓ git: $(git --version)" -ForegroundColor Green
-    Write-Host "✓ .NET SDK: $dotnetVersion" -ForegroundColor Green
+    Write-Host "[OK] git: $(git --version)" -ForegroundColor Green
+    Write-Host "[OK] .NET SDK: $dotnetVersion" -ForegroundColor Green
 }
 
 # Get latest release version from GitHub
@@ -71,7 +71,7 @@ function Get-LatestPlaywrightVersion {
         $versionParts = $version -split '\.'
         $majorMinor = "$($versionParts[0]).$($versionParts[1])"
         
-        Write-Host "✓ Latest version: $tagName (using release-$majorMinor)" -ForegroundColor Green
+        Write-Host "[OK] Latest version: $tagName (using release-$majorMinor)" -ForegroundColor Green
         return $majorMinor
     }
     catch {
@@ -93,7 +93,7 @@ $playwrightDir = "playwright-dotnet"
 if ($Cleanup -and (Test-Path $playwrightDir)) {
     Write-Host "`nCleaning up existing playwright-dotnet directory..." -ForegroundColor Cyan
     Remove-Item -Path $playwrightDir -Recurse -Force
-    Write-Host "✓ Cleanup complete" -ForegroundColor Green
+    Write-Host "[OK] Cleanup complete" -ForegroundColor Green
 }
 
 # Clone repository
@@ -104,7 +104,7 @@ if (-not (Test-Path $playwrightDir)) {
         Write-Error "Failed to clone repository"
         exit 1
     }
-    Write-Host "✓ Repository cloned" -ForegroundColor Green
+    Write-Host "[OK] Repository cloned" -ForegroundColor Green
 }
 else {
     Write-Host "`nPlaywright-dotnet directory already exists, skipping clone" -ForegroundColor Yellow
@@ -119,7 +119,7 @@ try {
         Write-Error "Failed to checkout release-$version"
         exit 1
     }
-    Write-Host "✓ Checked out release-$version" -ForegroundColor Green
+    Write-Host "[OK] Checked out release-$version" -ForegroundColor Green
 }
 finally {
     Pop-Location
@@ -133,7 +133,7 @@ if ($LASTEXITCODE -ne 0) {
     Write-Error "Failed to run Patchright"
     exit 1
 }
-Write-Host "✓ Patchright executed successfully" -ForegroundColor Green
+Write-Host "[OK] Patchright executed successfully" -ForegroundColor Green
 
 # Download drivers
 Write-Host "`nDownloading Playwright drivers..." -ForegroundColor Cyan
@@ -144,7 +144,7 @@ try {
         Write-Error "Failed to download drivers"
         exit 1
     }
-    Write-Host "✓ Drivers downloaded" -ForegroundColor Green
+    Write-Host "[OK] Drivers downloaded" -ForegroundColor Green
 }
 finally {
     Pop-Location
@@ -159,7 +159,7 @@ try {
         Write-Error "Failed to build solution"
         exit 1
     }
-    Write-Host "✓ Solution built successfully" -ForegroundColor Green
+    Write-Host "[OK] Solution built successfully" -ForegroundColor Green
 }
 finally {
     Pop-Location
@@ -174,7 +174,7 @@ try {
         Write-Error "Failed to create patch file"
         exit 1
     }
-    Write-Host "✓ Patch file created successfully" -ForegroundColor Green
+    Write-Host "[OK] Patch file created successfully" -ForegroundColor Green
 }
 finally {
     Pop-Location
@@ -189,7 +189,7 @@ try {
         Write-Error "Failed to pack project"
         exit 1
     }
-    Write-Host "✓ Project packed successfully" -ForegroundColor Green
+    Write-Host "[OK] Project packed successfully" -ForegroundColor Green
 }
 finally {
     Pop-Location
