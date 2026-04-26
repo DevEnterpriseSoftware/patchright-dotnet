@@ -1,5 +1,5 @@
 #!/usr/bin/dotnet run
-#:package Microsoft.CodeAnalysis.CSharp@5.0.0
+#:package Microsoft.CodeAnalysis.CSharp@5.3.0
 
 // =================================================================================================
 // Patchright .NET Patcher
