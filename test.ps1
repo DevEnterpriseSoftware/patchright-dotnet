@@ -64,14 +64,15 @@ $replacements = @(
     @(' [PlaywrightTest("page-event-pageerror.spec.ts", "should contain sourceURL")]', ' //[PlaywrightTest("page-event-pageerror.spec.ts", "should contain sourceURL")]'),
 
 # Replacements
-    @('window.open(''about:blank'')', 'window.open(''https://www.google.com/blank.html'')'),
-    @('  await Page.GotoAsync("about:blank")', '  await Page.GotoAsync("https://www.google.com/blank.html")'),
-    @('  await page.GotoAsync("about:blank")', '  await page.GotoAsync("https://www.google.com/blank.html")'),
-    @('GotoAsync("data:text/html,")', 'GotoAsync("https://www.google.com/blank.html")'),
-    @('Assert.AreEqual("about:blank", popup.Url)', 'Assert.AreEqual("https://www.google.com/blank.html", popup.Url)'),
-    @('Assert.AreEqual("about:blank", await page.EvaluateAsync<string>("window.location.href"));', 'Assert.AreEqual("https://www.google.com/blank.html", await page.EvaluateAsync<string>("window.location.href"));'),
+    @('window.open(''about:blank'')', 'window.open(''https://deventerprise.com/blank.html'')'),
+    @('  await Page.GotoAsync("about:blank")', '  await Page.GotoAsync("https://deventerprise.com/blank.html")'),
+    @('  await page.GotoAsync("about:blank")', '  await page.GotoAsync("https://deventerprise.com/blank.html")'),
+    @('GotoAsync("data:text/html,")', 'GotoAsync("https://deventerprise.com/blank.html")'),
+    @('Assert.AreEqual("about:blank", popup.Url)', 'Assert.AreEqual("https://deventerprise.com/blank.html", popup.Url)'),
+    @('Assert.AreEqual("about:blank", await page.EvaluateAsync<string>("window.location.href"));', 'Assert.AreEqual("https://deventerprise.com/blank.html", await page.EvaluateAsync<string>("window.location.href"));'),
     @(' === div', ' === document.querySelector(''div'')'),
     @('Page.EvaluateAsync("() => {}")', 'Page.EvaluateAsync("() => {}", isolatedContext: true)'),
+    #@('{protocol}://localhost:{port}', '{protocol}://127.0.0.1:{port}'),
 
 # Broken Assertions
     @(' [PlaywrightTest("playwright-test/playwright.expect.spec.ts", "should support toBeEnabled")]', '//[PlaywrightTest("playwright-test/playwright.expect.spec.ts", "should support toBeEnabled")]'),
@@ -89,7 +90,6 @@ $replacements = @(
     @(' [PlaywrightTest("locator-frame.spec.ts", "should wait for frame to go")]', '//[PlaywrightTest("locator-frame.spec.ts", "should wait for frame to go")]'),
     @(' [PlaywrightTest("locator-query.spec.ts", "should filter by regex with a single quote")]', '//[PlaywrightTest("locator-query.spec.ts", "should filter by regex with a single quote")]'),
     @(' [PlaywrightTest("page/expect-boolean.spec.ts", "toBeAttached > with frameLocator")]', '//[PlaywrightTest("page/expect-boolean.spec.ts", "toBeAttached > with frameLocator")]'), # This test makes no sense because async methods execute before being awaited so it will always fail.
-    
 
 # Inconsistent tests
     @(' [PlaywrightTest("resource-timing.spec.ts", "should work when serving from memory cache")]', '//[PlaywrightTest("resource-timing.spec.ts", "should work when serving from memory cache")]'),
@@ -177,6 +177,7 @@ finally {
 Write-Host "`nStep 4: Running tests..." -ForegroundColor Cyan
 Push-Location ".\playwright-dotnet"
 try {
+    git submodule update --init --recursive
     dotnet test -f net8.0 .\src\Playwright.Tests\Playwright.Tests.csproj --logger:"console;verbosity=normal"
     $testExitCode = $LASTEXITCODE
     
