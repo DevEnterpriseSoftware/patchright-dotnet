@@ -56,6 +56,7 @@ try
   PatchLocator();
   PatchPage();
   PatchBrowserContext();
+  PatchRouteInitScriptFallback();
   PatchClock();
   PatchTracing();
   PatchOptionsClasses();
@@ -410,7 +411,7 @@ void PatchPage()
                           request.Url.StartsWith("http", StringComparison.OrdinalIgnoreCase))
                       {
                           var protocol = request.Url.Split(':')[0];
-                          await route.FallbackAsync(new RouteFallbackOptions { Url = protocol + "://patchright-init-script-inject.internal/" }).ConfigureAwait(false);
+                          await route.FallbackAsync(new RouteFallbackOptions { Url = protocol + "://patchright-init-script-inject.internal/", PatchrightInitScript = true }).ConfigureAwait(false);
                       }
                       else
                       {
@@ -467,6 +468,53 @@ void PatchPage()
   File.WriteAllText(pageSupplementsInterfacePath, AddIsolatedContextToMethods(pageSupplementsInterfaceCode, "IPage", isolatedContextDefaultValue, methodNamesToPatch));
 }
 
+// Backport patchright-python#115: mark init-script fallback requests so the patched
+// driver strips the sentinel URL before proxy resolution.
+void PatchRouteInitScriptFallback()
+{
+  var routeFallbackOptionsPath = Path.Combine(playwrightPath, "src", "Playwright", "API", "Generated", "Options", "RouteFallbackOptions.cs");
+  var routeFallbackOptionsCode = File.ReadAllText(routeFallbackOptionsPath);
+
+  Console.WriteLine($"Patching RouteFallbackOptions file: {routeFallbackOptionsPath}");
+
+  if (!routeFallbackOptionsCode.Contains("PatchrightInitScript"))
+  {
+    routeFallbackOptionsCode = routeFallbackOptionsCode
+      .Replace("        Url = clone.Url;", "        PatchrightInitScript = clone.PatchrightInitScript;\n        Url = clone.Url;")
+      .Replace("    /// <summary>\n    /// <para>\n    /// If set changes the request URL.", "    [JsonPropertyName(\"patchrightInitScript\")]\n    public bool? PatchrightInitScript { get; set; }\n\n    /// <summary>\n    /// <para>\n    /// If set changes the request URL.");
+
+    File.WriteAllText(routeFallbackOptionsPath, routeFallbackOptionsCode);
+  }
+
+  var requestPath = Path.Combine(playwrightPath, "src", "Playwright", "Core", "Request.cs");
+  var requestCode = File.ReadAllText(requestPath);
+
+  Console.WriteLine($"Patching Request file: {requestPath}");
+
+  if (!requestCode.Contains("_fallbackOverrides.PatchrightInitScript"))
+  {
+    requestCode = requestCode.Replace(
+      "        _fallbackOverrides.PostData = overrides?.PostData ?? _fallbackOverrides.PostData;\n    }",
+      "        _fallbackOverrides.PostData = overrides?.PostData ?? _fallbackOverrides.PostData;\n        _fallbackOverrides.PatchrightInitScript = overrides?.PatchrightInitScript ?? _fallbackOverrides.PatchrightInitScript;\n    }");
+
+    File.WriteAllText(requestPath, requestCode);
+  }
+
+  var routePath = Path.Combine(playwrightPath, "src", "Playwright", "Core", "Route.cs");
+  var routeCode = File.ReadAllText(routePath);
+
+  Console.WriteLine($"Patching Route file: {routePath}");
+
+  if (!routeCode.Contains("[\"patchrightInitScript\"]"))
+  {
+    routeCode = routeCode.Replace(
+      "                [\"isFallback\"] = isFallback,\n            })).ConfigureAwait(false);",
+      "                [\"isFallback\"] = isFallback,\n                [\"patchrightInitScript\"] = options.PatchrightInitScript == true ? true : null,\n            })).ConfigureAwait(false);");
+
+    File.WriteAllText(routePath, routeCode);
+  }
+}
+
 // Add route injection to BrowserContext class and call from relevant methods.
 void PatchBrowserContext()
 {
@@ -506,7 +554,7 @@ void PatchBrowserContext()
                           request.Url.StartsWith("http", StringComparison.OrdinalIgnoreCase))
                       {
                           var protocol = request.Url.Split(':')[0];
-                          await route.FallbackAsync(new RouteFallbackOptions { Url = protocol + "://patchright-init-script-inject.internal/" }).ConfigureAwait(false);
+                          await route.FallbackAsync(new RouteFallbackOptions { Url = protocol + "://patchright-init-script-inject.internal/", PatchrightInitScript = true }).ConfigureAwait(false);
                       }
                       else
                       {
