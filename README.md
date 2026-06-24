@@ -74,7 +74,7 @@ class Program
 To be completely undetected, use the following configuration:
 ```csharp
 await using var context = await playwright.Chromium.LaunchPersistentContextAsync(
-    userDataDir: "...",
+    userDataDir: "./user-data",
     new BrowserTypeLaunchPersistentContextOptions 
     {
         Channel = "chrome",

@@ -11,7 +11,7 @@
 // 2. DRIVER PATCHES: Point to Patchright's modified Chromium driver instead of standard Playwright
 // 3. SCRIPT INJECTION PATCHES: Remove sourceURL comments that reveal automation
 // 4. ISOLATED CONTEXT PATCHES: Add parameter to control JavaScript context isolation
-// 5. ROUTE INJECTION PATCHES: Install routes to intercept and modify document requests
+// 5. ROUTE INJECTION PATCHES: Install routes to intercept and mark init-script document requests
 // 6. FOCUS CONTROL PATCHES: Add browser launch options for focus behavior control
 //
 // =================================================================================================
@@ -56,6 +56,7 @@ try
   PatchLocator();
   PatchPage();
   PatchBrowserContext();
+  PatchRouteInitScriptFallback();
   PatchClock();
   PatchTracing();
   PatchOptionsClasses();
@@ -409,8 +410,7 @@ void PatchPage()
                       if (request.ResourceType.Equals("document", StringComparison.OrdinalIgnoreCase) &&
                           request.Url.StartsWith("http", StringComparison.OrdinalIgnoreCase))
                       {
-                          var protocol = request.Url.Split(':')[0];
-                          await route.FallbackAsync(new RouteFallbackOptions { Url = protocol + "://patchright-init-script-inject.internal/" }).ConfigureAwait(false);
+                          await route.FallbackAsync(new RouteFallbackOptions { PatchrightInitScript = true }).ConfigureAwait(false);
                       }
                       else
                       {
@@ -505,8 +505,7 @@ void PatchBrowserContext()
                       if (request.ResourceType.Equals("document", StringComparison.OrdinalIgnoreCase) &&
                           request.Url.StartsWith("http", StringComparison.OrdinalIgnoreCase))
                       {
-                          var protocol = request.Url.Split(':')[0];
-                          await route.FallbackAsync(new RouteFallbackOptions { Url = protocol + "://patchright-init-script-inject.internal/" }).ConfigureAwait(false);
+                          await route.FallbackAsync(new RouteFallbackOptions { PatchrightInitScript = true }).ConfigureAwait(false);
                       }
                       else
                       {
@@ -549,6 +548,45 @@ void PatchBrowserContext()
 
     File.WriteAllText(browserContextPath, root.ToFullString());
   }
+}
+
+// Mark Patchright's init-script fallback requests so the patched driver strips the sentinel URL before proxy resolution.
+void PatchRouteInitScriptFallback()
+{
+  var routeFallbackOptionsPath = Path.Combine(playwrightPath, "src", "Playwright", "API", "Generated", "Options", "RouteFallbackOptions.cs");
+  var routeFallbackOptionsCode = File.ReadAllText(routeFallbackOptionsPath);
+
+  Console.WriteLine($"Patching RouteFallbackOptions file: {routeFallbackOptionsPath}");
+
+  File.WriteAllText(routeFallbackOptionsPath, AddPatchrightInitScriptToRouteFallbackOptions(routeFallbackOptionsCode));
+
+  var requestPath = Path.Combine(playwrightPath, "src", "Playwright", "Core", "Request.cs");
+  var requestCode = File.ReadAllText(requestPath);
+
+  Console.WriteLine($"Patching Request file: {requestPath}");
+
+  File.WriteAllText(requestPath, AddPatchrightInitScriptToFallbackOverrides(requestCode));
+
+  var routePath = Path.Combine(playwrightPath, "src", "Playwright", "Core", "Route.cs");
+  var routeCode = File.ReadAllText(routePath);
+
+  Console.WriteLine($"Patching Route file: {routePath}");
+
+  File.WriteAllText(routePath, AddPatchrightInitScriptToRouteContinueMessage(routeCode));
+
+  var pagePath = Path.Combine(playwrightPath, "src", "Playwright", "Core", "Page.cs");
+  var pageCode = File.ReadAllText(pagePath);
+
+  Console.WriteLine($"Patching Page init-script fallback call: {pagePath}");
+
+  File.WriteAllText(pagePath, UsePatchrightInitScriptFallbackOption(pageCode, "Page"));
+
+  var browserContextPath = Path.Combine(playwrightPath, "src", "Playwright", "Core", "BrowserContext.cs");
+  var browserContextCode = File.ReadAllText(browserContextPath);
+
+  Console.WriteLine($"Patching BrowserContext init-script fallback call: {browserContextPath}");
+
+  File.WriteAllText(browserContextPath, UsePatchrightInitScriptFallbackOption(browserContextCode, "BrowserContext"));
 }
 
 // Call the InstallInjectRouteAsync method when a clock is installed.
@@ -1027,6 +1065,208 @@ static string AddIsolatedContextToMethods(string code, string typeName, bool def
   return root.ToFullString();
 }
 
+// Method to add the Patchright init-script marker to route fallback options.
+static string AddPatchrightInitScriptToRouteFallbackOptions(string code)
+{
+  var tree = CSharpSyntaxTree.ParseText(code);
+  var root = tree.GetRoot();
+  var lineEndingStyle = DetectLineEndingStyle(root);
+  var routeFallbackOptionsClass = root.GetClass("RouteFallbackOptions");
+
+  var patchrightInitScriptPropertyExists = routeFallbackOptionsClass.Members
+    .OfType<PropertyDeclarationSyntax>()
+    .Any(p => p.Identifier.Text == "PatchrightInitScript");
+
+  if (!patchrightInitScriptPropertyExists)
+  {
+    var urlProperty = routeFallbackOptionsClass.Members
+      .OfType<PropertyDeclarationSyntax>()
+      .First(p => p.Identifier.Text == "Url");
+    var indentation = urlProperty.GetIndentation();
+
+    var patchrightInitScriptProperty = SyntaxFactory.ParseMemberDeclaration("""
+          [JsonPropertyName("patchrightInitScript")]
+          public bool? PatchrightInitScript { get; set; }
+          """)!
+      .WithFullIndentation(indentation, lineEndingStyle)
+      .WithLeadingTrivia(SyntaxFactory.TriviaList().Add(lineEndingStyle).AddRange(indentation))
+      .WithTrailingTrivia(lineEndingStyle);
+
+    var urlPropertyIndex = routeFallbackOptionsClass.Members.IndexOf(urlProperty);
+    root = root.ReplaceNode(routeFallbackOptionsClass, routeFallbackOptionsClass.WithMembers(
+      routeFallbackOptionsClass.Members.Insert(urlPropertyIndex, patchrightInitScriptProperty)));
+
+    routeFallbackOptionsClass = root.GetClass("RouteFallbackOptions");
+  }
+
+  var copyConstructor = routeFallbackOptionsClass.Members
+    .OfType<ConstructorDeclarationSyntax>()
+    .FirstOrDefault(c =>
+      c.ParameterList.Parameters.Count == 1 &&
+      c.ParameterList.Parameters[0].Type is IdentifierNameSyntax typeName &&
+      typeName.Identifier.Text == "RouteFallbackOptions");
+
+  if (copyConstructor?.Body is not null &&
+      !copyConstructor.Body.Statements.Any(statement => AssignsToIdentifier(statement, "PatchrightInitScript")))
+  {
+    var constructorStatements = copyConstructor.Body.Statements.ToList();
+    var urlAssignmentIndex = constructorStatements.FindIndex(statement => AssignsToIdentifier(statement, "Url"));
+    var insertionIndex = urlAssignmentIndex >= 0 ? urlAssignmentIndex : constructorStatements.Count;
+    var triviaSource = urlAssignmentIndex >= 0 ? constructorStatements[urlAssignmentIndex] : constructorStatements.LastOrDefault();
+
+    var patchrightInitScriptAssignment = SyntaxFactory.ParseStatement("PatchrightInitScript = clone.PatchrightInitScript;");
+    if (triviaSource is not null)
+    {
+      patchrightInitScriptAssignment = patchrightInitScriptAssignment.WithTriviaFrom(triviaSource);
+    }
+
+    constructorStatements.Insert(insertionIndex, patchrightInitScriptAssignment);
+
+    var newConstructorBody = SyntaxFactory.Block(constructorStatements)
+      .WithOpenBraceToken(copyConstructor.Body.OpenBraceToken)
+      .WithCloseBraceToken(copyConstructor.Body.CloseBraceToken);
+
+    root = root.ReplaceNode(routeFallbackOptionsClass, routeFallbackOptionsClass.ReplaceNode(copyConstructor, copyConstructor.WithBody(newConstructorBody)));
+  }
+
+  return root.ToFullString();
+}
+
+// Method to preserve Patchright init-script fallback markers across fallback override merges.
+static string AddPatchrightInitScriptToFallbackOverrides(string code)
+{
+  var tree = CSharpSyntaxTree.ParseText(code);
+  var root = tree.GetRoot();
+  var requestClass = root.GetClass("Request");
+  var applyFallbackOverridesMethod = requestClass.GetMethods("ApplyFallbackOverrides").First();
+
+  if (applyFallbackOverridesMethod.Body is null ||
+      applyFallbackOverridesMethod.Body.Statements.Any(statement => AssignsToExpression(statement, "_fallbackOverrides.PatchrightInitScript")))
+  {
+    return root.ToFullString();
+  }
+
+  var methodStatements = applyFallbackOverridesMethod.Body.Statements.ToList();
+  var postDataAssignmentIndex = methodStatements.FindIndex(statement => AssignsToExpression(statement, "_fallbackOverrides.PostData"));
+  var insertionIndex = postDataAssignmentIndex >= 0 ? postDataAssignmentIndex + 1 : methodStatements.Count;
+  var triviaSource = postDataAssignmentIndex >= 0 ? methodStatements[postDataAssignmentIndex] : methodStatements.LastOrDefault();
+
+  var patchrightInitScriptAssignment = SyntaxFactory.ParseStatement("_fallbackOverrides.PatchrightInitScript = overrides?.PatchrightInitScript ?? _fallbackOverrides.PatchrightInitScript;");
+  if (triviaSource is not null)
+  {
+    patchrightInitScriptAssignment = patchrightInitScriptAssignment.WithTriviaFrom(triviaSource);
+  }
+
+  methodStatements.Insert(insertionIndex, patchrightInitScriptAssignment);
+
+  var newMethodBody = SyntaxFactory.Block(methodStatements)
+    .WithOpenBraceToken(applyFallbackOverridesMethod.Body.OpenBraceToken)
+    .WithCloseBraceToken(applyFallbackOverridesMethod.Body.CloseBraceToken);
+
+  root = root.ReplaceNode(requestClass, requestClass.ReplaceNode(applyFallbackOverridesMethod, applyFallbackOverridesMethod.WithBody(newMethodBody)));
+
+  return root.ToFullString();
+}
+
+// Method to send Patchright's init-script marker to the patched driver during route continuation.
+static string AddPatchrightInitScriptToRouteContinueMessage(string code)
+{
+  var tree = CSharpSyntaxTree.ParseText(code);
+  var root = tree.GetRoot();
+  var lineEndingStyle = DetectLineEndingStyle(root);
+  var routeClass = root.GetClass("Route");
+  var innerContinueMethod = routeClass.GetMethods("InnerContinueAsync").First();
+
+  var dictionaryCreation = innerContinueMethod.DescendantNodes()
+    .OfType<ObjectCreationExpressionSyntax>()
+    .FirstOrDefault(oc =>
+      oc.Type is GenericNameSyntax gns &&
+      gns.Identifier.Text == "Dictionary" &&
+      oc.Initializer is not null);
+
+  if (dictionaryCreation?.Initializer is null)
+  {
+    return root.ToFullString();
+  }
+
+  var initializer = dictionaryCreation.Initializer;
+  var expressions = initializer.Expressions;
+
+  if (expressions.Any(expression => IsDictionaryEntryWithKey(expression, "patchrightInitScript")))
+  {
+    return root.ToFullString();
+  }
+
+  var newEntry = CreateDictionaryAssignment("patchrightInitScript", "options.PatchrightInitScript == true ? true : null");
+
+  if (expressions.Count > 0)
+  {
+    newEntry = newEntry.WithTriviaFrom(expressions.Last());
+  }
+
+  var newExpressions = expressions.Add(newEntry);
+  var newSeparatedList = SyntaxFactory.SeparatedList(
+    newExpressions,
+    expressions.GetSeparators().Append(SyntaxFactory.Token(SyntaxKind.CommaToken).WithTrailingTrivia(lineEndingStyle)));
+  var newInitializer = initializer.WithExpressions(newSeparatedList);
+  var newDictionaryCreation = dictionaryCreation.WithInitializer(newInitializer);
+
+  root = root.ReplaceNode(routeClass, routeClass.ReplaceNode(dictionaryCreation, newDictionaryCreation));
+
+  return root.ToFullString();
+}
+
+// Method to update already-injected Patchright fallback calls from URL rewriting to the init-script marker.
+static string UsePatchrightInitScriptFallbackOption(string code, string className)
+{
+  var tree = CSharpSyntaxTree.ParseText(code);
+  var root = tree.GetRoot();
+  var targetClass = root.GetClass(className);
+  var installInjectRouteMethod = targetClass.GetMethods("InstallInjectRouteAsync").FirstOrDefault();
+
+  if (installInjectRouteMethod is null)
+  {
+    return root.ToFullString();
+  }
+
+  while (true)
+  {
+    targetClass = root.GetClass(className);
+    installInjectRouteMethod = targetClass.GetMethods("InstallInjectRouteAsync").FirstOrDefault();
+
+    if (installInjectRouteMethod is null)
+    {
+      return root.ToFullString();
+    }
+
+    var urlAssignment = installInjectRouteMethod.DescendantNodes()
+      .OfType<ObjectCreationExpressionSyntax>()
+      .Where(IsRouteFallbackOptionsObjectCreation)
+      .SelectMany(oc => oc.Initializer?.Expressions.OfType<AssignmentExpressionSyntax>() ?? Enumerable.Empty<AssignmentExpressionSyntax>())
+      .FirstOrDefault(assignment =>
+        assignment.Left is IdentifierNameSyntax identifierName &&
+        identifierName.Identifier.Text == "Url" &&
+        assignment.Right.ToFullString().Contains("patchright-init-script-inject.internal"));
+
+    if (urlAssignment is null)
+    {
+      return root.ToFullString();
+    }
+
+    var patchrightInitScriptAssignment = SyntaxFactory.AssignmentExpression(
+      SyntaxKind.SimpleAssignmentExpression,
+      SyntaxFactory.IdentifierName("PatchrightInitScript"),
+      SyntaxFactory.LiteralExpression(SyntaxKind.TrueLiteralExpression))
+      .WithOperatorToken(
+        SyntaxFactory.Token(SyntaxKind.EqualsToken)
+          .WithLeadingTrivia(SyntaxFactory.Space)
+          .WithTrailingTrivia(SyntaxFactory.Space))
+      .WithTriviaFrom(urlAssignment);
+
+    root = root.ReplaceNode(targetClass, targetClass.ReplaceNode(urlAssignment, patchrightInitScriptAssignment));
+  }
+}
+
 // Method to add FocusControl property and clone statement to options classes.
 static string AddFocusControlToOptionsClass(string code, string className)
 {
@@ -1203,6 +1443,56 @@ static string AddDictionaryEntryToMethod(string code, string className, IEnumera
 
   return root.ToFullString();
 }
+
+static bool AssignsToIdentifier(StatementSyntax statement, string identifierName)
+  => statement is ExpressionStatementSyntax { Expression: AssignmentExpressionSyntax assignment } &&
+     assignment.Left is IdentifierNameSyntax leftIdentifier &&
+     leftIdentifier.Identifier.Text == identifierName;
+
+static bool AssignsToExpression(StatementSyntax statement, string leftExpression)
+  => statement is ExpressionStatementSyntax { Expression: AssignmentExpressionSyntax assignment } &&
+     assignment.Left.ToString() == leftExpression;
+
+static bool IsDictionaryEntryWithKey(ExpressionSyntax expression, string key)
+{
+  if (expression is AssignmentExpressionSyntax assignment &&
+      assignment.Left is ImplicitElementAccessSyntax elementAccess)
+  {
+    var arg = elementAccess.ArgumentList.Arguments.FirstOrDefault();
+    return arg?.Expression is LiteralExpressionSyntax literal &&
+           literal.Token.ValueText == key;
+  }
+
+  if (expression is InitializerExpressionSyntax initExpr &&
+      initExpr.Expressions.Count == 2 &&
+      initExpr.Expressions[0] is LiteralExpressionSyntax oldStyleLiteral)
+  {
+    return oldStyleLiteral.Token.ValueText == key;
+  }
+
+  return false;
+}
+
+static AssignmentExpressionSyntax CreateDictionaryAssignment(string key, string value)
+  => SyntaxFactory.AssignmentExpression(
+    SyntaxKind.SimpleAssignmentExpression,
+    SyntaxFactory.ImplicitElementAccess(
+      SyntaxFactory.BracketedArgumentList(
+        SyntaxFactory.SingletonSeparatedList(
+          SyntaxFactory.Argument(
+            SyntaxFactory.LiteralExpression(
+              SyntaxKind.StringLiteralExpression,
+              SyntaxFactory.Literal(key)))))),
+    SyntaxFactory.ParseExpression(value))
+    .WithOperatorToken(
+      SyntaxFactory.Token(SyntaxKind.EqualsToken)
+        .WithLeadingTrivia(SyntaxFactory.Space)
+        .WithTrailingTrivia(SyntaxFactory.Space));
+
+static bool IsRouteFallbackOptionsObjectCreation(ObjectCreationExpressionSyntax objectCreation)
+  => objectCreation.Type is IdentifierNameSyntax identifierName &&
+     identifierName.Identifier.Text == "RouteFallbackOptions" &&
+     objectCreation.Initializer is not null;
 
 // Analyze the existing file's line ending style to keep formatting consistent.
 static SyntaxTrivia DetectLineEndingStyle(SyntaxNode root)
