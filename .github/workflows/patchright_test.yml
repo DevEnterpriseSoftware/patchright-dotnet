@@ -11,6 +11,17 @@ on:
   pull_request:
     branches: [master]
 
+  workflow_dispatch:
+    inputs:
+      driver_version:
+        description: 'Driver version to test (leave blank to use get-versions output)'
+        required: false
+        type: string
+
+concurrency:
+  group: build-and-test
+  cancel-in-progress: false
+
 env:
   DOTNET_VERSION: '10.0.x'
   DOTNET_NOLOGO: true
@@ -37,7 +48,10 @@ jobs:
       - name: Run test script
         shell: pwsh
         run: |
-          $driverVersion = "${{ steps.versions.outputs.driver_version }}"
+          $driverVersion = "${{ github.event.inputs.driver_version }}"
+          if (-not $driverVersion) {
+            $driverVersion = "${{ steps.versions.outputs.driver_version }}"
+          }
           
           if ($driverVersion) {
             Write-Host "Running tests with driver version: $driverVersion" -ForegroundColor Cyan
