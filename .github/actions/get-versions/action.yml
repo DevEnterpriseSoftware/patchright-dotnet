@@ -166,7 +166,7 @@ runs:
             if echo "$BODY" | jq -e 'type == "array"' > /dev/null 2>&1; then
               MATCHING_VERSION=$(echo "$BODY" | jq -r '.[].tag_name' | \
                 sed 's/^v//' | \
-                grep "^${PLAYWRIGHT_MAJOR_MINOR}\." | \
+                { grep "^${PLAYWRIGHT_MAJOR_MINOR}\." || true; } | \
                 sort -V | \
                 tail -1)
               
