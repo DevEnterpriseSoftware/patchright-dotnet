@@ -107,8 +107,8 @@ jobs:
           # Check if driver is available
           if [ "$DRIVER_AVAILABLE" != "true" ]; then
             echo ""
-            echo "::error::Cannot build: No compatible Patchright driver found for version $PLAYWRIGHT_MAJOR_MINOR"
-            echo "Waiting for driver release at: https://github.com/Kaliiiiiiiiii-Vinyzu/patchright/releases"
+          echo "::error::Cannot build: No compatible patchright-core package found on npm for version $PLAYWRIGHT_MAJOR_MINOR"
+          echo "Waiting for a matching patchright-core version to be published on npm"
             exit 1
           fi
           

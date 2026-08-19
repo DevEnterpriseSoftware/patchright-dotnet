@@ -215,22 +215,23 @@ void DisablePackageValidation()
   }
 }
 
-// Change the driver download URL to point to Patchright releases.
+// Change the driver package download URL to point to patchright-core on npm.
 void PatchDriverDownloader()
 {
   var driverDownloaderPath = Path.Combine(playwrightPath, "src", "tools", "Playwright.Tooling", "DriverDownloader.cs");
 
   Console.WriteLine($"Patching DriverDownloader file: {driverDownloaderPath}");
 
-  const string OldUrl = "https://playwright.azureedge.net/builds/driver";
-  const string NewUrl = "https://github.com/Kaliiiiiiiiii-Vinyzu/patchright/releases/download";
-  const string OldUrlConstruction = "{cdn}/playwright-{driverVersion}-{platform}.zip";
-  const string NewUrlConstruction = "{cdn}/v{driverVersion}/playwright-{driverVersion}-{platform}.zip";
+  const string OldUrl = "https://registry.npmjs.org/playwright-core/-/playwright-core-{DriverVersion}.tgz";
+  const string NewUrl = "https://registry.npmjs.org/patchright-core/-/patchright-core-{DriverVersion}.tgz";
 
-  var content = File.ReadAllText(driverDownloaderPath)
-      .Replace(OldUrl, NewUrl)
-      .Replace(OldUrlConstruction, NewUrlConstruction);
-  File.WriteAllText(driverDownloaderPath, content);
+  var content = File.ReadAllText(driverDownloaderPath);
+  if (!content.Contains(OldUrl, StringComparison.Ordinal))
+  {
+    throw new InvalidOperationException($"Expected Playwright npm driver URL was not found in {driverDownloaderPath}.");
+  }
+
+  File.WriteAllText(driverDownloaderPath, content.Replace(OldUrl, NewUrl, StringComparison.Ordinal));
 }
 
 // Remove sourceURL from being appended to any scripts.
