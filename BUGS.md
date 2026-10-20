@@ -39,6 +39,8 @@ GotoAsync("data:text/html,") -> GotoAsync("https://www.google.com/blank.html")
 [PlaywrightTest("browsercontext-events.spec.ts", "weberror event should work")]  
 
 ### Websocket Routing (https://github.com/Kaliiiiiiiiii-Vinyzu/patchright/issues/30)
+[PlaywrightTest("route-web-socket.spec.ts", "should emit close upon frame navigation")]
+[PlaywrightTest("route-web-socket.spec.ts", "should not throw after page closure")]
 [PlaywrightTest("page-route-web-socket.spec.ts", "should pattern match")]  
 [PlaywrightTest("page-route-web-socket.spec.ts", "should work with baseURL")]  
 [PlaywrightTest("page-route-web-socket.spec.ts", "should work without server")]  

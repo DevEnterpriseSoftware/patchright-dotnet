@@ -48,6 +48,8 @@ $replacements = @(
     @(' [PlaywrightTest("workers.spec.ts", "should report console event on the worker when not listening on page or context")]', '//[PlaywrightTest("workers.spec.ts", "should report console event on the worker when not listening on page or context")]'),
     @(' [PlaywrightTest("browsercontext-events.spec.ts", "weberror event should work")]', ' //[PlaywrightTest("browsercontext-events.spec.ts", "weberror event should work")]'),
     @(' [PlaywrightTest("browsercontext-events.spec.ts", "weberror event should include location")]', ' //[PlaywrightTest("browsercontext-events.spec.ts", "weberror event should include location")]'),
+    @(' [PlaywrightTest("route-web-socket.spec.ts", "should emit close upon frame navigation")]', ' //[PlaywrightTest("route-web-socket.spec.ts", "should emit close upon frame navigation")]'),
+    @(' [PlaywrightTest("route-web-socket.spec.ts", "should not throw after page closure")]', ' //[PlaywrightTest("route-web-socket.spec.ts", "should not throw after page closure")]'),
     @(' [PlaywrightTest("page-route-web-socket.spec.ts", "should pattern match")]', ' //[PlaywrightTest("page-route-web-socket.spec.ts", "should pattern match")]'),
     @(' [PlaywrightTest("page-route-web-socket.spec.ts", "should work with baseURL")]', ' //[PlaywrightTest("page-route-web-socket.spec.ts", "should work with baseURL")]'),
     @(' [PlaywrightTest("page-route-web-socket.spec.ts", "should work without server")]', ' //[PlaywrightTest("page-route-web-socket.spec.ts", "should work without server")]'),
