@@ -46,6 +46,8 @@ jobs:
         uses: ./.github/actions/get-versions
       
       - name: Run test script
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
         shell: pwsh
         run: |
           $driverVersion = "${{ github.event.inputs.driver_version }}"

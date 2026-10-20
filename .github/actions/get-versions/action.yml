@@ -45,7 +45,10 @@ runs:
             sleep $WAIT_TIME
           fi
           
-          RESPONSE=$(curl -s -w "\n%{http_code}" https://api.github.com/repos/microsoft/playwright-dotnet/releases/latest)
+          RESPONSE=$(curl -s -w "\n%{http_code}" \
+            -H "Authorization: Bearer ${{ github.token }}" \
+            -H "Accept: application/vnd.github+json" \
+            https://api.github.com/repos/microsoft/playwright-dotnet/releases/latest)
           HTTP_CODE=$(echo "$RESPONSE" | tail -1)
           BODY=$(echo "$RESPONSE" | sed '$d')
           
@@ -98,7 +101,10 @@ runs:
             sleep $WAIT_TIME
           fi
           
-          RESPONSE=$(curl -s -w "\n%{http_code}" https://api.github.com/repos/DevEnterpriseSoftware/patchright-dotnet/releases/latest)
+          RESPONSE=$(curl -s -w "\n%{http_code}" \
+            -H "Authorization: Bearer ${{ github.token }}" \
+            -H "Accept: application/vnd.github+json" \
+            https://api.github.com/repos/DevEnterpriseSoftware/patchright-dotnet/releases/latest)
           HTTP_CODE=$(echo "$RESPONSE" | tail -1)
           BODY=$(echo "$RESPONSE" | sed '$d')
           

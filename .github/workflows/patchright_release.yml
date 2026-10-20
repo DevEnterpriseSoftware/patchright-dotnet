@@ -158,6 +158,8 @@ jobs:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
       - name: Run build script
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
         run: |
           $targetVersion = "${{ needs.check-versions.outputs.target_version }}"
           $driverVersion = "${{ needs.check-versions.outputs.driver_version }}"

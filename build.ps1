@@ -63,7 +63,12 @@ function Get-LatestPlaywrightVersion {
     
     try {
         $apiUrl = "https://api.github.com/repos/microsoft/playwright-dotnet/releases/latest"
-        $response = Invoke-RestMethod -Uri $apiUrl -Headers @{ "User-Agent" = "Patchright-Build-Script" }
+        $headers = @{ "User-Agent" = "Patchright-Build-Script" }
+        # Authenticated requests are rate limited per repository instead of per (shared) runner IP.
+        if ($env:GITHUB_TOKEN) {
+            $headers["Authorization"] = "Bearer $($env:GITHUB_TOKEN)"
+        }
+        $response = Invoke-RestMethod -Uri $apiUrl -Headers $headers
         $tagName = $response.tag_name
         
         # Remove 'v' prefix if present and strip build number (keep only major.minor)
