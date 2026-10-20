@@ -36,6 +36,7 @@ var packageVersion = args.Length > 2 ? args[2] : null;
 if (!Directory.Exists(playwrightPath))
 {
   Console.WriteLine($"Path to Playwright source '{playwrightPath}' not found, provide the path or run `git clone https://github.com/microsoft/playwright-dotnet.git` in this directory first.");
+  Environment.ExitCode = 1;
   return;
 }
 
@@ -68,6 +69,9 @@ catch (Exception ex)
   Console.ForegroundColor = ConsoleColor.Red;
   Console.WriteLine(ex);
   Console.ResetColor();
+
+  // Fail the run so build.ps1 stops instead of packaging a partially patched (or unpatched) build.
+  Environment.ExitCode = 1;
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -215,23 +219,54 @@ void DisablePackageValidation()
   }
 }
 
-// Change the driver package download URL to point to patchright-core on npm.
+// Point the driver package download at patchright-core on npm instead of playwright-core.
+// Playwright <= 1.62 downloads the tarball from a hard-coded registry URL; 1.63+ uses `npm pack`
+// with a package spec and then opens the produced .tgz by name, so both of those need replacing.
 void PatchDriverDownloader()
 {
   var driverDownloaderPath = Path.Combine(playwrightPath, "src", "tools", "Playwright.Tooling", "DriverDownloader.cs");
 
   Console.WriteLine($"Patching DriverDownloader file: {driverDownloaderPath}");
 
+  // Playwright <= 1.62: direct registry download.
   const string OldUrl = "https://registry.npmjs.org/playwright-core/-/playwright-core-{DriverVersion}.tgz";
   const string NewUrl = "https://registry.npmjs.org/patchright-core/-/patchright-core-{DriverVersion}.tgz";
 
+  // Playwright 1.63+: `npm pack playwright-core@{DriverVersion}`.
+  const string OldPackageSpec = "\"playwright-core@{DriverVersion}\"";
+  const string NewPackageSpec = "\"patchright-core@{DriverVersion}\"";
+  const string OldTarballName = "\"playwright-core-{DriverVersion}.tgz\"";
+  const string NewTarballName = "\"patchright-core-{DriverVersion}.tgz\"";
+
   var content = File.ReadAllText(driverDownloaderPath);
-  if (!content.Contains(OldUrl, StringComparison.Ordinal))
+
+  if (content.Contains(OldUrl, StringComparison.Ordinal))
   {
-    throw new InvalidOperationException($"Expected Playwright npm driver URL was not found in {driverDownloaderPath}.");
+    content = content.Replace(OldUrl, NewUrl, StringComparison.Ordinal);
+  }
+  else if (content.Contains(OldPackageSpec, StringComparison.Ordinal))
+  {
+    if (!content.Contains(OldTarballName, StringComparison.Ordinal))
+    {
+      throw new InvalidOperationException($"Found the npm pack package spec but not the expected tarball name {OldTarballName} in {driverDownloaderPath}.");
+    }
+
+    content = content
+      .Replace(OldPackageSpec, NewPackageSpec, StringComparison.Ordinal)
+      .Replace(OldTarballName, NewTarballName, StringComparison.Ordinal)
+      .Replace("Extracted playwright-core {DriverVersion}", "Extracted patchright-core {DriverVersion}", StringComparison.Ordinal);
+  }
+  else
+  {
+    throw new InvalidOperationException($"No known playwright-core driver download pattern was found in {driverDownloaderPath}. Playwright has probably changed how it fetches the driver.");
   }
 
-  File.WriteAllText(driverDownloaderPath, content.Replace(OldUrl, NewUrl, StringComparison.Ordinal));
+  if (content.Contains("playwright-core-{DriverVersion}", StringComparison.Ordinal) || content.Contains("playwright-core@{DriverVersion}", StringComparison.Ordinal))
+  {
+    throw new InvalidOperationException($"DriverDownloader still references playwright-core after patching: {driverDownloaderPath}.");
+  }
+
+  File.WriteAllText(driverDownloaderPath, content);
 }
 
 // Remove sourceURL from being appended to any scripts.

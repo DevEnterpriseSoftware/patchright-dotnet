@@ -150,6 +150,27 @@ finally {
     Pop-Location
 }
 
+# Verify the bundled driver is patchright-core and not stock playwright-core.
+# This guards against the driver download patch silently not applying (as happened with 1.61.0, 1.62.0 and 1.63.0).
+Write-Host "`nVerifying bundled driver..." -ForegroundColor Cyan
+$driverPackageDir = Join-Path $playwrightDir "src/Playwright/.drivers/package"
+$driverPackageJson = Join-Path $driverPackageDir "package.json"
+if (-not (Test-Path $driverPackageJson)) {
+    Write-Error "Driver package.json not found at $driverPackageJson"
+    exit 1
+}
+$driverPackage = Get-Content $driverPackageJson -Raw | ConvertFrom-Json
+if ($driverPackage.name -ne "patchright-core") {
+    Write-Error "Bundled driver is '$($driverPackage.name)' $($driverPackage.version), expected 'patchright-core'. The driver download patch did not apply."
+    exit 1
+}
+$leakyFiles = Get-ChildItem -Path (Join-Path $driverPackageDir "lib") -Recurse -Filter "*.js" | Select-String -Pattern "--disable-popup-blocking" -SimpleMatch -List
+if ($leakyFiles) {
+    Write-Error "Bundled driver still contains Playwright's --disable-popup-blocking flag in: $($leakyFiles.Path -join ', ')"
+    exit 1
+}
+Write-Host "[OK] Bundled driver is patchright-core $($driverPackage.version)" -ForegroundColor Green
+
 # Build solution
 Write-Host "`nBuilding Playwright solution..." -ForegroundColor Cyan
 Push-Location $playwrightDir
